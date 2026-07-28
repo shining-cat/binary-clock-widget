@@ -1,0 +1,26 @@
+# Android Studio / IntelliJ IDEA
+*.iml
+.idea/
+.idea.backup-*/
+
+# Local configuration
+local.properties
+
+# Build outputs
+/build
+**/build/
+/captures
+.externalNativeBuild
+.cxx
+
+# Gradle
+.gradle/
+
+# Kotlin
+.kotlin/
+
+# macOS
+.DS_Store
+
+# Android Profiler
+*.hprof
