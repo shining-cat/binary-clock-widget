@@ -1,5 +1,7 @@
 # BinClockWidget
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 An AMOLED-black, monochrome **binary-clock** Android home-screen widget.
 
 It renders the current time and date as a 6×4 grid of dots. Cells that would
@@ -47,11 +49,19 @@ Play Services, no Firebase, and no proprietary SDKs**. Weather uses the keyless
 ./gradlew :app:assembleDebug
 ```
 
-Requirements: JDK 21, Android SDK with platform 36 installed.
+Requirements: JDK 21, Android SDK with platform 37 installed.
 
 - **minSdk** 26
-- **compileSdk / targetSdk** 36
+- **compileSdk / targetSdk** 37
 
 ## License
 
-License: TBD (FOSS, F-Droid-bound).
+BinClockWidget is free and open-source software licensed under the
+[GNU General Public License v3.0](LICENSE).
+
+```
+SPDX-License-Identifier: GPL-3.0-or-later
+```
+
+You're free to use, modify, and distribute this software, but any derivative
+works must also be open source under GPL-3.0-or-later.
