@@ -1,15 +1,15 @@
 [versions]
 # Build tooling
-agp = "9.2.1"
+agp = "9.3.1"
 kotlin = "2.4.0"
 
-# AndroidX / Compose (pinned to the SDK-36 train; compileSdk is 36)
-composeBom = "2025.12.01"
-activityCompose = "1.11.0"
+# AndroidX / Compose (pinned to the SDK-37 train; compileSdk is 37)
+composeBom = "2026.06.01"
+activityCompose = "1.13.0"
 glance = "1.1.1"
 datastore = "1.2.1"
 work = "2.11.2"
-material = "1.12.0"
+material = "1.14.0"
 
 # DI
 koin = "4.2.2"
@@ -67,6 +67,5 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
