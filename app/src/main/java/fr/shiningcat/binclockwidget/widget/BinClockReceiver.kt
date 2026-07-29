@@ -1,24 +1,30 @@
 package fr.shiningcat.binclockwidget.widget
 
 import android.content.Context
-import androidx.glance.GlanceId
+import android.content.Intent
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
-import androidx.glance.appwidget.provideContent
-import androidx.glance.text.Text
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.runBlocking
 
-/**
- * AppWidget host receiver. Placeholder Glance content; the real binary-clock
- * face is implemented in a later task.
- */
 class BinClockReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = BinClockWidget()
-}
 
-class BinClockWidget : GlanceAppWidget() {
-    override suspend fun provideGlance(context: Context, id: GlanceId) {
-        provideContent {
-            Text(text = "BinClock")
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        // tick scheduling added in a later task
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        // tick cancellation added in a later task
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == BinClockWidget.ACTION_TICK) {
+            runBlocking { BinClockWidget().updateAll(context) }
+            // reschedule added in a later task
         }
     }
 }

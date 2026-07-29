@@ -1,6 +1,10 @@
 package fr.shiningcat.binclockwidget.widget.ui
 
+import android.content.Context
+import android.content.Intent
 import android.os.Build
+import android.provider.AlarmClock
+import android.provider.CalendarContract
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -9,8 +13,13 @@ import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
+import androidx.glance.action.Action
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.background
 import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
@@ -26,11 +35,15 @@ import fr.shiningcat.binclockwidget.domain.WeatherGlyphMapper
 import fr.shiningcat.binclockwidget.domain.model.Cell
 import fr.shiningcat.binclockwidget.domain.model.DayNight
 import fr.shiningcat.binclockwidget.domain.model.GlyphSlot
+import fr.shiningcat.binclockwidget.domain.model.RowKind
+import fr.shiningcat.binclockwidget.domain.model.TapAction
+import fr.shiningcat.binclockwidget.domain.model.TapZone
 import fr.shiningcat.binclockwidget.domain.model.WeatherCondition
+import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
 import fr.shiningcat.binclockwidget.widget.model.WidgetRenderState
 
 private val dotSize = 22.dp
-private val cellPadding = 1.dp
+private val cellTouchTarget = 48.dp
 private val hairlineHeight = 1.dp
 private val hairlineWidth = 138.dp
 
@@ -92,7 +105,7 @@ fun DotGrid(state: WidgetRenderState) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    row.cells.forEach { cell -> CellImage(cell, state, litColor, dimColor) }
+                    row.cells.forEach { cell -> CellImage(cell, row.kind, state, litColor, dimColor) }
                 }
                 if (state.settings.hairline && index == 1) {
                     Spacer(
@@ -110,23 +123,62 @@ fun DotGrid(state: WidgetRenderState) {
 @Composable
 private fun CellImage(
     cell: Cell,
+    rowKind: RowKind,
     state: WidgetRenderState,
     litColor: ColorProvider,
     dimColor: ColorProvider,
 ) {
-    val modifier = GlanceModifier.padding(cellPadding).size(dotSize)
-    when (cell) {
-        is Cell.Bit -> Image(
-            provider = ImageProvider(if (cell.lit) R.drawable.ic_dot_filled else R.drawable.ic_dot_ring),
-            contentDescription = null,
-            modifier = modifier,
-            colorFilter = ColorFilter.tint(if (cell.lit) litColor else dimColor),
-        )
-        is Cell.Glyph -> Image(
-            provider = ImageProvider(resolveGlyph(cell.slot, state)),
-            contentDescription = null,
-            modifier = modifier,
-            colorFilter = ColorFilter.tint(litColor),
-        )
+    val context = LocalContext.current
+    val action = actionForZone(zoneOf(cell, rowKind), state.settings, context)
+    val boxModifier = GlanceModifier.size(cellTouchTarget).let {
+        if (action != null) it.clickable(onClick = action) else it
+    }
+    val imageModifier = GlanceModifier.size(dotSize)
+    Box(modifier = boxModifier, contentAlignment = Alignment.Center) {
+        when (cell) {
+            is Cell.Bit -> Image(
+                provider = ImageProvider(if (cell.lit) R.drawable.ic_dot_filled else R.drawable.ic_dot_ring),
+                contentDescription = null,
+                modifier = imageModifier,
+                colorFilter = ColorFilter.tint(if (cell.lit) litColor else dimColor),
+            )
+            is Cell.Glyph -> Image(
+                provider = ImageProvider(resolveGlyph(cell.slot, state)),
+                contentDescription = null,
+                modifier = imageModifier,
+                colorFilter = ColorFilter.tint(litColor),
+            )
+        }
     }
 }
+
+private fun zoneOf(cell: Cell, rowKind: RowKind): TapZone = when (cell) {
+    is Cell.Glyph -> when (cell.slot) {
+        GlyphSlot.ALARM -> TapZone.ALARM
+        GlyphSlot.WEATHER_NOW, GlyphSlot.WEATHER_TODAY, GlyphSlot.WEATHER_TOMORROW -> TapZone.WEATHER
+    }
+    is Cell.Bit -> when (rowKind) {
+        RowKind.HOURS, RowKind.MINUTES -> TapZone.TIME
+        RowKind.DAY, RowKind.MONTH -> TapZone.DATE
+    }
+}
+
+private fun actionForZone(zone: TapZone, settings: WidgetSettings, context: Context): Action? =
+    when (settings.tapActions[zone] ?: TapAction.NONE) {
+        TapAction.NONE -> null
+        TapAction.OPEN_ALARMS -> actionStartActivity(
+            Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+        TapAction.OPEN_CALENDAR -> actionStartActivity(
+            Intent(
+                Intent.ACTION_VIEW,
+                CalendarContract.CONTENT_URI.buildUpon().appendPath("time")
+                    .appendPath(System.currentTimeMillis().toString()).build(),
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+        TapAction.OPEN_CLOCK, TapAction.OPEN_APP -> {
+            val pkg = settings.tapAppPackages[zone]
+            pkg?.let { context.packageManager.getLaunchIntentForPackage(it) }
+                ?.let { actionStartActivity(it) }
+        }
+    }
