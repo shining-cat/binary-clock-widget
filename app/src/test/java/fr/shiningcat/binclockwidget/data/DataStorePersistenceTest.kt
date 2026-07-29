@@ -3,6 +3,7 @@ package fr.shiningcat.binclockwidget.data
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import fr.shiningcat.binclockwidget.data.settings.DataStoreSettingsStore
 import fr.shiningcat.binclockwidget.data.settings.SettingsStore
 import fr.shiningcat.binclockwidget.data.weather.DataStoreWeatherCache
 import fr.shiningcat.binclockwidget.domain.model.TapAction
@@ -53,14 +54,16 @@ class DataStorePersistenceTest {
     @Test
     fun `settings on empty store equals defaults`(@TempDir dir: File) =
         runTest(UnconfinedTestDispatcher()) {
-            val settings = SettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
+            val settings: SettingsStore =
+                DataStoreSettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
             assertEquals(WidgetSettings(), settings.settings().first())
         }
 
     @Test
     fun `settings update reflects every change`(@TempDir dir: File) =
         runTest(UnconfinedTestDispatcher()) {
-            val settings = SettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
+            val settings: SettingsStore =
+                DataStoreSettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
             settings.update {
                 it.copy(
                     hairline = true,

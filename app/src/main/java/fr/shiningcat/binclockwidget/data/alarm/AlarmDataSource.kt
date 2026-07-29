@@ -3,7 +3,7 @@ package fr.shiningcat.binclockwidget.data.alarm
 import android.app.AlarmManager
 import android.content.Context
 
-interface AlarmDataSource {
+fun interface AlarmDataSource {
     fun isAlarmSet(): Boolean
 }
 

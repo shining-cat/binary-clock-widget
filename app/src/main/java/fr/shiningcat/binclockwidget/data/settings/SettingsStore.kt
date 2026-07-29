@@ -14,12 +14,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-class SettingsStore(
-    private val dataStore: DataStore<Preferences>,
-) {
-    fun settings(): Flow<WidgetSettings> = dataStore.data.map { it.toSettings() }
+interface SettingsStore {
+    fun settings(): Flow<WidgetSettings>
+    suspend fun update(transform: (WidgetSettings) -> WidgetSettings)
+}
 
-    suspend fun update(transform: (WidgetSettings) -> WidgetSettings) {
+class DataStoreSettingsStore(
+    private val dataStore: DataStore<Preferences>,
+) : SettingsStore {
+    override fun settings(): Flow<WidgetSettings> = dataStore.data.map { it.toSettings() }
+
+    override suspend fun update(transform: (WidgetSettings) -> WidgetSettings) {
         val current = dataStore.data.first().toSettings()
         val updated = transform(current)
         dataStore.edit { prefs -> updated.writeInto(prefs) }
