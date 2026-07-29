@@ -10,6 +10,7 @@ glance = "1.1.1"
 datastore = "1.2.1"
 work = "2.11.2"
 material = "1.14.0"
+lifecycleViewmodel = "2.10.0"
 
 # DI
 koin = "4.2.2"
@@ -46,6 +47,9 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 
 # DataStore
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+
+# Lifecycle
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodel" }
 
 # Networking / serialization
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }

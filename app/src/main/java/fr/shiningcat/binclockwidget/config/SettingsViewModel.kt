@@ -1,0 +1,56 @@
+package fr.shiningcat.binclockwidget.config
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import fr.shiningcat.binclockwidget.data.settings.SettingsStore
+import fr.shiningcat.binclockwidget.domain.model.TapAction
+import fr.shiningcat.binclockwidget.domain.model.TapZone
+import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+sealed interface SettingsUiState {
+    data object Loading : SettingsUiState
+    data class Ready(
+        val settings: WidgetSettings,
+        val locationGranted: Boolean,
+        val materialYouAvailable: Boolean,
+    ) : SettingsUiState
+}
+
+class SettingsViewModel(
+    private val store: SettingsStore,
+    private val locationGranted: () -> Boolean,
+    private val materialYouAvailable: Boolean,
+) : ViewModel() {
+    private val permission = MutableStateFlow(locationGranted())
+
+    val uiState: StateFlow<SettingsUiState> =
+        combine(store.settings(), permission) { settings, granted ->
+            SettingsUiState.Ready(settings, granted, materialYouAvailable)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState.Loading)
+
+    fun onColorChanged(argb: Int) = mutate { it.copy(colorArgb = argb) }
+
+    fun onMaterialYouToggled(enabled: Boolean) = mutate { it.copy(useMaterialYou = enabled) }
+
+    fun onHairlineToggled(enabled: Boolean) = mutate { it.copy(hairline = enabled) }
+
+    fun onTapActionChanged(zone: TapZone, action: TapAction) =
+        mutate { it.copy(tapActions = it.tapActions + (zone to action)) }
+
+    fun onTapAppPackageChanged(zone: TapZone, pkg: String?) =
+        mutate { it.copy(tapAppPackages = it.tapAppPackages + (zone to pkg)) }
+
+    fun refreshPermission() {
+        permission.value = locationGranted()
+    }
+
+    private fun mutate(transform: (WidgetSettings) -> WidgetSettings) {
+        viewModelScope.launch { store.update(transform) }
+    }
+}

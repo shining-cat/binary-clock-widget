@@ -66,6 +66,9 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
     // Networking / serialization
     implementation(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
