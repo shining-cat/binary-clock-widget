@@ -46,6 +46,14 @@ import fr.shiningcat.binclockwidget.widget.model.WidgetRenderState
 
 private val hairlineHeight = 1.dp
 
+/**
+ * Glance 1.1.x marks every runtime-Color ColorProvider factory @RestrictTo; the public
+ * ColorProvider interface is the only unrestricted way to build one from a user-chosen ARGB.
+ */
+internal data class ArgbColorProvider(val color: Color) : ColorProvider {
+    override fun getColor(context: Context): Color = color
+}
+
 @DrawableRes
 internal fun weatherDrawable(condition: WeatherCondition, dayNight: DayNight): Int = when (condition) {
     WeatherCondition.CLEAR -> if (dayNight == DayNight.DAY) R.drawable.ic_light_mode else R.drawable.ic_clear_night
@@ -88,10 +96,10 @@ fun DotGrid(state: WidgetRenderState) {
             if (state.settings.useMaterialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 GlanceTheme.colors.primary
             } else {
-                ColorProvider(Color(state.settings.colorArgb))
+                ArgbColorProvider(Color(state.settings.colorArgb))
             }
         val dimColor: ColorProvider =
-            ColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.14f))
+            ArgbColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.14f))
 
         val size = LocalSize.current
         val cell = minOf(size.width / 6, size.height / 4)
