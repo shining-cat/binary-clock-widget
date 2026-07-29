@@ -8,12 +8,14 @@ import android.provider.CalendarContract
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
+import androidx.glance.LocalSize
 import androidx.glance.action.Action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionStartActivity
@@ -42,10 +44,7 @@ import fr.shiningcat.binclockwidget.domain.model.WeatherCondition
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
 import fr.shiningcat.binclockwidget.widget.model.WidgetRenderState
 
-private val dotSize = 22.dp
-private val cellTouchTarget = 48.dp
 private val hairlineHeight = 1.dp
-private val hairlineWidth = 138.dp
 
 @DrawableRes
 internal fun weatherDrawable(condition: WeatherCondition, dayNight: DayNight): Int = when (condition) {
@@ -94,26 +93,35 @@ fun DotGrid(state: WidgetRenderState) {
         val dimColor: ColorProvider =
             ColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.14f))
 
-        Column(
+        val size = LocalSize.current
+        val cell = minOf(size.width / 6, size.height / 4)
+        val dot = cell * 0.55f
+
+        Box(
             modifier = GlanceModifier.fillMaxSize().background(Color.Black),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalAlignment = Alignment.CenterHorizontally,
+            contentAlignment = Alignment.Center,
         ) {
-            state.face.rows.forEachIndexed { index, row ->
-                Row(
-                    modifier = GlanceModifier,
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    row.cells.forEach { cell -> CellImage(cell, row.kind, state, litColor, dimColor) }
-                }
-                if (state.settings.hairline && index == 1) {
-                    Spacer(
-                        modifier = GlanceModifier
-                            .height(hairlineHeight)
-                            .width(hairlineWidth)
-                            .background(dimColor),
-                    )
+            Column(
+                modifier = GlanceModifier,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                state.face.rows.forEachIndexed { index, row ->
+                    Row(
+                        modifier = GlanceModifier,
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        row.cells.forEach { c -> CellImage(c, row.kind, state, litColor, dimColor, cell, dot) }
+                    }
+                    if (state.settings.hairline && index == 1) {
+                        Spacer(
+                            modifier = GlanceModifier
+                                .height(hairlineHeight)
+                                .width(cell * 6)
+                                .background(dimColor),
+                        )
+                    }
                 }
             }
         }
@@ -127,10 +135,12 @@ private fun CellImage(
     state: WidgetRenderState,
     litColor: ColorProvider,
     dimColor: ColorProvider,
+    cellSize: Dp,
+    dotSize: Dp,
 ) {
     val context = LocalContext.current
     val action = actionForZone(zoneOf(cell, rowKind), state.settings, context)
-    val boxModifier = GlanceModifier.size(cellTouchTarget).let {
+    val boxModifier = GlanceModifier.size(cellSize).let {
         if (action != null) it.clickable(onClick = action) else it
     }
     val imageModifier = GlanceModifier.size(dotSize)
