@@ -24,3 +24,9 @@ local.properties
 
 # Android Profiler
 *.hprof
+
+# Signing — keystores and their base64 exports must never be committed
+*.keystore
+*.jks
+*.b64
+keystore.properties
