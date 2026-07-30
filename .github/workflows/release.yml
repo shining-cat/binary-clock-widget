@@ -9,6 +9,8 @@ jobs:
   release:
     name: Build and Release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # required for softprops/action-gh-release to create the GitHub release
 
     steps:
       - name: Checkout code
