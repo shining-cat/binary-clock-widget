@@ -1,23 +1,15 @@
-BinClockWidget is an AMOLED-black, monochrome binary-clock home-screen widget. It renders the current time and date as a grid of dots — solid on true black, no chrome, no colour — so it disappears into an AMOLED wallpaper and sips battery.
+An AMOLED-black, monochrome binary-clock Android home-screen widget.
 
-How to read it:
+It renders the current time and date as a 6×4 grid of dots. Cells that would otherwise go unused carry a couple of small extras: the device alarm state and a weather glyph. The aesthetic is deliberately austere — solid dots on true black, no chrome, no colour — so it disappears into an AMOLED wallpaper and sips battery.
 
-The face is a grid of rows (values) and columns (place values).
-* Rows encode, top to bottom: hours, minutes, day of month, month.
-* Columns are binary place values: 32, 16, 8, 4, 2, 1.
-* A lit dot means that place value is on; add the lit columns in a row to read that row's number.
+How to read it
 
-The cells not needed by the shorter rows are reused to show the device alarm state and a weather-condition glyph.
+The face is a grid of rows (values) and columns (place values):
 
-Features:
-* Pure binary time and date display
-* Alarm-state glyph that mirrors the system alarm indicator
-* Optional weather glyph (current, today, tomorrow)
-* Configurable dot, icon and background colours; optional Material You theming
-* AMOLED-friendly true black, no unnecessary redraws
+* Rows encode, top to bottom: hours, minutes, day (of month), month.
+* Columns are binary place values: 32 · 16 · 8 · 4 · 2 · 1.
+* A lit (solid) dot means that place value is on; an unlit dot is off. Add the lit columns in a row to read that row's number.
 
-Privacy and openness:
+For example, a minutes row with the 32, 8, and 2 dots lit reads 32 + 8 + 2 = 42.
 
-BinClockWidget is 100% free and open-source software with no Google Play Services, no Firebase, and no proprietary SDKs. Weather uses the keyless Open-Meteo API; location uses the platform LocationManager (no fused/Play location).
-
-Source code: https://github.com/shining-cat/binary-clock-widget
+The cells not needed by the low-value ends of the shorter rows are reused to show the alarm state and a weather condition glyph.
