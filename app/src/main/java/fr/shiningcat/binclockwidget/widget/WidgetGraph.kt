@@ -6,6 +6,7 @@ import fr.shiningcat.binclockwidget.data.alarm.AndroidAlarmDataSource
 import fr.shiningcat.binclockwidget.data.location.AndroidLocationDataSource
 import fr.shiningcat.binclockwidget.data.location.LocationDataSource
 import fr.shiningcat.binclockwidget.data.settings.DataStoreSettingsStore
+import fr.shiningcat.binclockwidget.data.settings.SettingsStore
 import fr.shiningcat.binclockwidget.data.weather.DataStoreWeatherCache
 import fr.shiningcat.binclockwidget.data.weather.OpenMeteoApi
 import fr.shiningcat.binclockwidget.data.weather.WeatherRepository
@@ -41,6 +42,9 @@ object WidgetGraph {
 
     fun location(context: Context): LocationDataSource =
         AndroidLocationDataSource(context.applicationContext)
+
+    fun settingsStore(context: Context): SettingsStore =
+        DataStoreSettingsStore(context.applicationContext.settingsDataStore)
 
     // Full network stack; kept off the per-minute render path in resolver().
     fun weatherRepository(context: Context): WeatherRepository {

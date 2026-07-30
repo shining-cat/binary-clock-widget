@@ -50,6 +50,7 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 
 # Lifecycle
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodel" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodel" }
 
 # Networking / serialization
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
