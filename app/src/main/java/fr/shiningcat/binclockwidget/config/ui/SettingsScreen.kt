@@ -2,19 +2,12 @@ package fr.shiningcat.binclockwidget.config.ui
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -34,8 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,10 +62,6 @@ private fun loadLaunchableApps(pm: PackageManager): List<InstalledApp> {
         },
     )
 }
-
-private val presetColors: List<Int> = listOf(
-    0xFFFFFFFF, 0xFFB0BEC5, 0xFFFF5252, 0xFFFFB300, 0xFF69F0AE, 0xFF40C4FF, 0xFFE040FB,
-).map { it.toInt() }
 
 @Composable
 fun SettingsScreen(
@@ -146,12 +133,23 @@ private fun ReadySettings(
         Cheatsheet()
 
         Section("Color") {
-            ColorSwatches(selected = settings.colorArgb, onSelected = onColorChanged)
             if (state.materialYouAvailable) {
                 ToggleRow(
                     label = "Use Material You",
                     checked = settings.useMaterialYou,
                     onCheckedChange = onMaterialYouToggled,
+                )
+            }
+            if (settings.useMaterialYou) {
+                Text(
+                    text = "Colors follow your wallpaper.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else {
+                LabeledColorPicker(
+                    label = "Dots",
+                    color = settings.colorArgb,
+                    onChanged = onColorChanged,
                 )
             }
         }
@@ -270,31 +268,15 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
     }
 }
 
+/**
+ * A small text label above a [ColorPicker]. The Dots / Icon / Background controls all share this
+ * shape, so adding the later ones (P4/P5) is a one-liner.
+ */
 @Composable
-private fun ColorSwatches(selected: Int, onSelected: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        presetColors.forEach { argb ->
-            val isSelected = argb == selected
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(argb))
-                    .border(
-                        width = if (isSelected) 3.dp else 1.dp,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outline
-                        },
-                        shape = CircleShape,
-                    )
-                    .clickable { onSelected(argb) },
-            )
-        }
+private fun LabeledColorPicker(label: String, color: Int, onChanged: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        ColorPicker(color = color, onColorChanged = onChanged)
     }
 }
 
