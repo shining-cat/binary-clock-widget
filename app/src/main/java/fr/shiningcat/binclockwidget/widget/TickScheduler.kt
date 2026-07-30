@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 
 fun nextMinuteBoundaryMs(nowMs: Long): Long = ((nowMs / 60000L) + 1) * 60000L
 
@@ -11,8 +12,15 @@ object TickScheduler {
     fun schedule(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val pi = tickPendingIntent(context)
-        // Inexact alarm: Doze may coalesce it, which is acceptable for a minute clock and needs no exact-alarm permission.
-        alarmManager.set(AlarmManager.RTC, nextMinuteBoundaryMs(System.currentTimeMillis()), pi)
+        val triggerAt = nextMinuteBoundaryMs(System.currentTimeMillis())
+        // Exact + non-wakeup RTC: fires on the minute while the screen is on, and never wakes the
+        // device just to redraw an unseen widget. Fall back to inexact if exact scheduling isn't
+        // permitted (SCHEDULE_EXACT_ALARM is revocable on API 31-32).
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()) {
+            alarmManager.setExact(AlarmManager.RTC, triggerAt, pi)
+        } else {
+            alarmManager.set(AlarmManager.RTC, triggerAt, pi)
+        }
     }
 
     fun cancel(context: Context) {

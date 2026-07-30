@@ -24,7 +24,6 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
-import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
@@ -92,18 +91,24 @@ internal fun resolveGlyph(slot: GlyphSlot, state: WidgetRenderState): Int {
 @Composable
 fun DotGrid(state: WidgetRenderState) {
     GlanceTheme {
-        val litColor: ColorProvider =
+        // One base colour drives lit, dim, and separator so all three follow the same source —
+        // Material You's primary when enabled, otherwise the user's ARGB. Deriving dim/separator
+        // from a fixed colorArgb here was the bug where off-rings stayed white under Material You.
+        val context = LocalContext.current
+        val baseColor: Color =
             if (state.settings.useMaterialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                GlanceTheme.colors.primary
+                GlanceTheme.colors.primary.getColor(context)
             } else {
-                ArgbColorProvider(Color(state.settings.colorArgb))
+                Color(state.settings.colorArgb)
             }
-        // Off-dots must stay clearly dimmer than lit ones, but visible on AMOLED black.
-        val dimColor: ColorProvider =
-            ArgbColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.30f))
-        // Separator reads stronger than the off-dots so a 2dp line is unmistakable.
-        val separatorColor: ColorProvider =
-            ArgbColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.55f))
+        val litColor: ColorProvider = ArgbColorProvider(baseColor)
+        // Off-rings share the lit colour: the hollow-ring vs. filled-dot shape already signals
+        // on/off, so a dimmer tint just read as "wrong colour" against the rest of the grid.
+        val dimColor: ColorProvider = litColor
+        // Separator is deliberately softer than the dots so the divider line doesn't compete.
+        // A concrete Color (not a custom ColorProvider): Glance's background(ColorProvider) overload
+        // doesn't paint a runtime-built provider, which is why the separator stayed invisible.
+        val separatorColor: Color = baseColor.copy(alpha = 0.55f)
 
         val size = LocalSize.current
         val cell = minOf(size.width / 6, size.height / 4)
@@ -127,11 +132,17 @@ fun DotGrid(state: WidgetRenderState) {
                         row.cells.forEach { c -> CellImage(c, row.kind, state, litColor, dimColor, cell, dot) }
                     }
                     if (state.settings.hairline && index == 1) {
-                        Spacer(
+                        // A Box, not a Spacer: Glance Spacer backgrounds don't paint, which is why
+                        // the separator was invisible however it was toggled.
+                        // Width cell*5 (not cell*6): inset half a cell each side so the line aligns
+                        // with the dot columns instead of running to the widget edges. The Column
+                        // centres it horizontally.
+                        Box(
                             modifier = GlanceModifier
                                 .height(hairlineHeight)
-                                .width(cell * 6)
+                                .width(cell * 5)
                                 .background(separatorColor),
+                            content = {},
                         )
                     }
                 }

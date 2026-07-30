@@ -3,7 +3,15 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- deliberately NO USE_EXACT_ALARM / SCHEDULE_EXACT_ALARM -->
+    <!-- Re-arm the minute tick after a reboot: AlarmManager alarms don't survive one. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!--
+      Exact minute ticks so the clock is never a batching-window behind. USE_EXACT_ALARM is the
+      sanctioned permission for clock apps (auto-granted, no prompt) on API 33+; SCHEDULE_EXACT_ALARM
+      covers 31-32. Paired with a non-wakeup RTC alarm, so the device is never woken just to redraw.
+    -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!--
       Android 11+ package visibility: without this, queryIntentActivities returns only a
@@ -28,6 +36,19 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="fr.shiningcat.binclockwidget.ACTION_TICK" />
+            </intent-filter>
+            <!--
+              Signals that either revive a dropped tick chain (reboot, app replacement) or need an
+              immediate re-read of state the per-minute tick would otherwise lag behind (time /
+              timezone / date change, next-alarm change → the alarm glyph).
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

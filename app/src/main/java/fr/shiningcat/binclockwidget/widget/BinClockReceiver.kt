@@ -1,5 +1,7 @@
 package fr.shiningcat.binclockwidget.widget
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
@@ -43,13 +45,27 @@ class BinClockReceiver : GlanceAppWidgetReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == BinClockWidget.ACTION_TICK) {
-            TickScheduler.schedule(context)
-            val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-            // Skip the redraw when the screen is off: inexact alarms still fire in Doze, but an invisible update wastes wakeups.
-            if (powerManager?.isInteractive == true) {
-                runBlocking { BinClockWidget().updateAll(context) }
-            }
+        // The last widget was removed: onDisabled already cancelled the tick, so don't resurrect it.
+        if (intent.action == AppWidgetManager.ACTION_APPWIDGET_DISABLED) return
+        // No widgets placed (e.g. a BOOT_COMPLETED with nothing on the home screen): nothing to arm.
+        if (!hasWidgets(context)) return
+
+        // Re-arm the minute tick on ANY live broadcast — not just ACTION_TICK. The AlarmManager
+        // chain is dropped on reboot and app replacement, and a bare APPWIDGET_UPDATE never
+        // restarts it, which is what froze the clock at a stale time. Rescheduling is idempotent
+        // (single alarm, FLAG_UPDATE_CURRENT), so re-arming on every broadcast is safe and cheap.
+        TickScheduler.schedule(context)
+
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        // Skip the redraw when the screen is off: inexact alarms still fire in Doze, but an invisible update wastes wakeups.
+        if (powerManager?.isInteractive == true) {
+            runBlocking { BinClockWidget().updateAll(context) }
         }
+    }
+
+    private fun hasWidgets(context: Context): Boolean {
+        val manager = AppWidgetManager.getInstance(context) ?: return false
+        val ids = manager.getAppWidgetIds(ComponentName(context, BinClockReceiver::class.java))
+        return ids.isNotEmpty()
     }
 }
