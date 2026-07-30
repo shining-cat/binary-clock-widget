@@ -149,14 +149,16 @@ private fun ReadySettings(
     val apps = remember { loadLaunchableApps(pm) }
     var activeColorTarget by remember { mutableStateOf<ColorTarget?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        Cheatsheet()
+    Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            Cheatsheet()
 
         Section("Colour") {
             if (state.materialYouAvailable) {
@@ -184,12 +186,6 @@ private fun ReadySettings(
             ColorRow("Background", settings.backgroundColorArgb) {
                 activeColorTarget = ColorTarget.BACKGROUND
             }
-            Text(
-                text = "Appearance changes show on the widget at the next clock update " +
-                    "(within a minute), or right away when you tap Done.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
 
         Section("Hairline separator") {
@@ -229,11 +225,29 @@ private fun ReadySettings(
             }
         }
 
-        Button(
-            onClick = onConfirm,
-            modifier = Modifier.fillMaxWidth(),
+        }
+        // Pinned footer: Done stays visible regardless of scroll, and the note reassures the user
+        // their edits are already saved (persisted on every change) and appear on the widget as
+        // soon as they leave this screen.
+        HorizontalDivider()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Done")
+            Text(
+                text = "Your changes are saved automatically and appear on the widget as soon " +
+                    "as you leave this screen.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(
+                onClick = onConfirm,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Done")
+            }
         }
     }
 

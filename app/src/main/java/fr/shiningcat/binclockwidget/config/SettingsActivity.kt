@@ -22,9 +22,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.glance.appwidget.updateAll
-import androidx.lifecycle.lifecycleScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import fr.shiningcat.binclockwidget.BinClockApp
 import fr.shiningcat.binclockwidget.config.ui.SettingsScreen
 import fr.shiningcat.binclockwidget.data.weather.WeatherRefreshWorker
 import fr.shiningcat.binclockwidget.widget.BinClockWidget
@@ -80,12 +80,21 @@ class SettingsActivity : ComponentActivity() {
         }
     }
 
-    private fun confirm(appWidgetId: Int) {
-        lifecycleScope.launch {
+    override fun onStop() {
+        super.onStop()
+        // Settings persist to DataStore on every change; repaint the widget as soon as the user
+        // leaves this screen (Done, Back, or Home) so changes appear immediately instead of waiting
+        // for the next minute tick. Runs on the application scope so it survives finish().
+        (application as BinClockApp).applicationScope.launch {
             BinClockWidget().updateAll(applicationContext)
-            setResult(RESULT_OK, resultIntent(appWidgetId))
-            finish()
         }
+    }
+
+    private fun confirm(appWidgetId: Int) {
+        // Changes are already saved; just confirm placement (RESULT_OK) and finish. The widget
+        // repaint happens in onStop(), which fires on finish() as well as Back/Home.
+        setResult(RESULT_OK, resultIntent(appWidgetId))
+        finish()
     }
 
     // Settings follows the system light/dark preference (the widget itself stays AMOLED-black).
