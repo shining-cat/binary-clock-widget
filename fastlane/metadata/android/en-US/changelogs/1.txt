@@ -1,0 +1,8 @@
+Version 0.1.0 - First public release on F-Droid!
+
+Features:
+- Binary-clock home-screen widget: hours, minutes, day and month as a grid of dots
+- AMOLED-black monochrome aesthetic
+- Alarm-state glyph mirroring the system alarm indicator
+- Optional weather glyph via the keyless Open-Meteo API
+- Configurable dot, icon and background colours; optional Material You theming

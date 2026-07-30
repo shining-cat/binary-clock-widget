@@ -1,0 +1,23 @@
+BinClockWidget is an AMOLED-black, monochrome binary-clock home-screen widget. It renders the current time and date as a grid of dots — solid on true black, no chrome, no colour — so it disappears into an AMOLED wallpaper and sips battery.
+
+How to read it:
+
+The face is a grid of rows (values) and columns (place values).
+* Rows encode, top to bottom: hours, minutes, day of month, month.
+* Columns are binary place values: 32, 16, 8, 4, 2, 1.
+* A lit dot means that place value is on; add the lit columns in a row to read that row's number.
+
+The cells not needed by the shorter rows are reused to show the device alarm state and a weather-condition glyph.
+
+Features:
+* Pure binary time and date display
+* Alarm-state glyph that mirrors the system alarm indicator
+* Optional weather glyph (current, today, tomorrow)
+* Configurable dot, icon and background colours; optional Material You theming
+* AMOLED-friendly true black, no unnecessary redraws
+
+Privacy and openness:
+
+BinClockWidget is 100% free and open-source software with no Google Play Services, no Firebase, and no proprietary SDKs. Weather uses the keyless Open-Meteo API; location uses the platform LocationManager (no fused/Play location).
+
+Source code: https://github.com/shining-cat/binary-clock-widget
