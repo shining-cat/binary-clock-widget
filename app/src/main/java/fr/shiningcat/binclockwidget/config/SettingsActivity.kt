@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.config
 
 import android.Manifest
@@ -43,7 +47,8 @@ class SettingsActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             viewModel.refreshPermission()
             if (granted) {
-                WorkManager.getInstance(applicationContext)
+                WorkManager
+                    .getInstance(applicationContext)
                     .enqueue(OneTimeWorkRequestBuilder<WeatherRefreshWorker>().build())
             }
         }
@@ -51,10 +56,11 @@ class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val appWidgetId = intent?.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            INVALID_APPWIDGET_ID,
-        ) ?: INVALID_APPWIDGET_ID
+        val appWidgetId =
+            intent?.extras?.getInt(
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                INVALID_APPWIDGET_ID,
+            ) ?: INVALID_APPWIDGET_ID
 
         // Default to cancelled so backing out of first-drop configuration cancels the placement.
         setResult(RESULT_CANCELED, resultIntent(appWidgetId))
@@ -105,15 +111,20 @@ class SettingsActivity : ComponentActivity() {
     // Settings follows the system light/dark preference (the widget itself stays AMOLED-black).
     // Material You applies the wallpaper palette on S+; otherwise the static Material schemes.
     @Composable
-    private fun colorSchemeForDevice() = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (isSystemInDarkTheme()) dynamicDarkColorScheme(this) else dynamicLightColorScheme(this)
-        isSystemInDarkTheme() -> darkColorScheme()
-        else -> lightColorScheme()
-    }
+    private fun colorSchemeForDevice() =
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                if (isSystemInDarkTheme()) dynamicDarkColorScheme(this) else dynamicLightColorScheme(this)
+            }
+            isSystemInDarkTheme() -> {
+                darkColorScheme()
+            }
+            else -> {
+                lightColorScheme()
+            }
+        }
 
-    private fun resultIntent(appWidgetId: Int): Intent =
-        Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+    private fun resultIntent(appWidgetId: Int): Intent = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
     private companion object {
         const val TAG = "SettingsActivity"

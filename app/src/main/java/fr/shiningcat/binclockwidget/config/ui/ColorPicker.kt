@@ -1,6 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.config.ui
 
-import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -27,6 +30,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import android.graphics.Color as AndroidColor
 
 // Compact sizing: the picker lives in a bottom sheet, so it stays small and hex-free. The live
 // preview is rendered by the caller (in the sheet header), keeping it clear of the slider stack.
@@ -123,32 +127,34 @@ private fun SaturationValuePanel(
     }
 
     Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(PANEL_HEIGHT)
-            .onSizeChanged { panelSize = it }
-            .pointerInput(Unit) {
-                detectTapGestures { handle(it) }
-            }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { handle(it) },
-                    onDrag = { change, _ ->
-                        change.consume()
-                        handle(change.position)
-                    },
-                )
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(PANEL_HEIGHT)
+                .onSizeChanged { panelSize = it }
+                .pointerInput(Unit) {
+                    detectTapGestures { handle(it) }
+                }.pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { handle(it) },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            handle(change.position)
+                        },
+                    )
+                },
     ) {
         drawRect(
-            brush = Brush.horizontalGradient(
-                listOf(Color.White, Color.hsv(hue, 1f, 1f)),
-            ),
+            brush =
+                Brush.horizontalGradient(
+                    listOf(Color.White, Color.hsv(hue, 1f, 1f)),
+                ),
         )
         drawRect(
-            brush = Brush.verticalGradient(
-                listOf(Color.Transparent, Color.Black),
-            ),
+            brush =
+                Brush.verticalGradient(
+                    listOf(Color.Transparent, Color.Black),
+                ),
         )
         val cx = (saturation * size.width).coerceIn(0f, size.width)
         val cy = ((1f - value) * size.height).coerceIn(0f, size.height)
@@ -157,11 +163,15 @@ private fun SaturationValuePanel(
 }
 
 @Composable
-private fun HueSlider(hue: Float, onHueChange: (Float) -> Unit) {
+private fun HueSlider(
+    hue: Float,
+    onHueChange: (Float) -> Unit,
+) {
     var sliderSize by remember { mutableStateOf(IntSize.Zero) }
-    val hueColors = remember {
-        (0..360 step 30).map { Color.hsv(it.toFloat(), 1f, 1f) }
-    }
+    val hueColors =
+        remember {
+            (0..360 step 30).map { Color.hsv(it.toFloat(), 1f, 1f) }
+        }
 
     fun handle(position: Offset) {
         val w = sliderSize.width.toFloat()
@@ -170,22 +180,22 @@ private fun HueSlider(hue: Float, onHueChange: (Float) -> Unit) {
     }
 
     Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(SLIDER_HEIGHT)
-            .onSizeChanged { sliderSize = it }
-            .pointerInput(Unit) {
-                detectTapGestures { handle(it) }
-            }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { handle(it) },
-                    onDrag = { change, _ ->
-                        change.consume()
-                        handle(change.position)
-                    },
-                )
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(SLIDER_HEIGHT)
+                .onSizeChanged { sliderSize = it }
+                .pointerInput(Unit) {
+                    detectTapGestures { handle(it) }
+                }.pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { handle(it) },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            handle(change.position)
+                        },
+                    )
+                },
     ) {
         drawRect(brush = Brush.horizontalGradient(hueColors))
         val cx = ((hue / 360f) * size.width).coerceIn(0f, size.width)
@@ -211,28 +221,29 @@ private fun AlphaSlider(
     }
 
     Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(SLIDER_HEIGHT)
-            .onSizeChanged { sliderSize = it }
-            .pointerInput(Unit) {
-                detectTapGestures { handle(it) }
-            }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { handle(it) },
-                    onDrag = { change, _ ->
-                        change.consume()
-                        handle(change.position)
-                    },
-                )
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(SLIDER_HEIGHT)
+                .onSizeChanged { sliderSize = it }
+                .pointerInput(Unit) {
+                    detectTapGestures { handle(it) }
+                }.pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { handle(it) },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            handle(change.position)
+                        },
+                    )
+                },
     ) {
         drawCheckerboard()
         drawRect(
-            brush = Brush.horizontalGradient(
-                listOf(opaque.copy(alpha = 0f), opaque.copy(alpha = 1f)),
-            ),
+            brush =
+                Brush.horizontalGradient(
+                    listOf(opaque.copy(alpha = 0f), opaque.copy(alpha = 1f)),
+                ),
         )
         val cx = (alpha * size.width).coerceIn(0f, size.width)
         drawThumb(Offset(cx, size.height / 2f))
@@ -268,10 +279,11 @@ internal fun DrawScope.drawCheckerboard(
             drawRect(
                 color = if ((row + col) % 2 == 0) light else dark,
                 topLeft = Offset(x, y),
-                size = Size(
-                    width = minOf(cell, size.width - x),
-                    height = minOf(cell, size.height - y),
-                ),
+                size =
+                    Size(
+                        width = minOf(cell, size.width - x),
+                        height = minOf(cell, size.height - y),
+                    ),
             )
         }
     }

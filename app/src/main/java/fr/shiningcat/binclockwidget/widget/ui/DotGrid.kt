@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.widget.ui
 
 import android.content.Context
@@ -12,6 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
@@ -26,10 +31,8 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
-import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.GlanceTheme
 import androidx.glance.unit.ColorProvider
 import fr.shiningcat.binclockwidget.R
 import fr.shiningcat.binclockwidget.domain.WeatherGlyphMapper
@@ -49,42 +52,87 @@ private val hairlineHeight = 2.dp
  * Glance 1.1.x marks every runtime-Color ColorProvider factory @RestrictTo; the public
  * ColorProvider interface is the only unrestricted way to build one from a user-chosen ARGB.
  */
-internal data class ArgbColorProvider(val color: Color) : ColorProvider {
+internal data class ArgbColorProvider(
+    val color: Color,
+) : ColorProvider {
     override fun getColor(context: Context): Color = color
 }
 
 @DrawableRes
-internal fun weatherDrawable(condition: WeatherCondition, dayNight: DayNight): Int = when (condition) {
-    WeatherCondition.CLEAR -> if (dayNight == DayNight.DAY) R.drawable.ic_light_mode else R.drawable.ic_clear_night
-    WeatherCondition.PARTLY_CLOUDY -> if (dayNight == DayNight.DAY) R.drawable.ic_partly_cloudy_day else R.drawable.ic_partly_cloudy_night
-    WeatherCondition.OVERCAST -> R.drawable.ic_cloud
-    WeatherCondition.FOG -> R.drawable.ic_foggy
-    WeatherCondition.DRIZZLE -> R.drawable.ic_rainy_light
-    WeatherCondition.RAIN -> R.drawable.ic_rainy
-    WeatherCondition.SNOW -> R.drawable.ic_weather_snowy
-    WeatherCondition.RAIN_SHOWERS -> R.drawable.ic_rainy_heavy
-    WeatherCondition.SNOW_SHOWERS -> R.drawable.ic_snowing
-    WeatherCondition.THUNDERSTORM -> R.drawable.ic_thunderstorm
-    WeatherCondition.UNKNOWN -> R.drawable.ic_remove
-}
+internal fun weatherDrawable(
+    condition: WeatherCondition,
+    dayNight: DayNight,
+): Int =
+    when (condition) {
+        WeatherCondition.CLEAR -> {
+            if (dayNight == DayNight.DAY) R.drawable.ic_light_mode else R.drawable.ic_clear_night
+        }
+        WeatherCondition.PARTLY_CLOUDY -> {
+            if (dayNight ==
+                DayNight.DAY
+            ) {
+                R.drawable.ic_partly_cloudy_day
+            } else {
+                R.drawable.ic_partly_cloudy_night
+            }
+        }
+        WeatherCondition.OVERCAST -> {
+            R.drawable.ic_cloud
+        }
+        WeatherCondition.FOG -> {
+            R.drawable.ic_foggy
+        }
+        WeatherCondition.DRIZZLE -> {
+            R.drawable.ic_rainy_light
+        }
+        WeatherCondition.RAIN -> {
+            R.drawable.ic_rainy
+        }
+        WeatherCondition.SNOW -> {
+            R.drawable.ic_weather_snowy
+        }
+        WeatherCondition.RAIN_SHOWERS -> {
+            R.drawable.ic_rainy_heavy
+        }
+        WeatherCondition.SNOW_SHOWERS -> {
+            R.drawable.ic_snowing
+        }
+        WeatherCondition.THUNDERSTORM -> {
+            R.drawable.ic_thunderstorm
+        }
+        WeatherCondition.UNKNOWN -> {
+            R.drawable.ic_remove
+        }
+    }
 
 @DrawableRes
-internal fun resolveGlyph(slot: GlyphSlot, state: WidgetRenderState): Int {
+internal fun resolveGlyph(
+    slot: GlyphSlot,
+    state: WidgetRenderState,
+): Int {
     val weather = state.weather
     return when (slot) {
-        GlyphSlot.ALARM -> if (state.alarmSet) R.drawable.ic_alarm else R.drawable.ic_alarm_off
-        GlyphSlot.WEATHER_NOW -> weather?.let {
-            weatherDrawable(
-                WeatherGlyphMapper.toCondition(it.nowCode),
-                if (it.nowIsDay) DayNight.DAY else DayNight.NIGHT,
-            )
-        } ?: R.drawable.ic_remove
-        GlyphSlot.WEATHER_TODAY -> weather?.let {
-            weatherDrawable(WeatherGlyphMapper.toCondition(it.todayCode), DayNight.DAY)
-        } ?: R.drawable.ic_remove
-        GlyphSlot.WEATHER_TOMORROW -> weather?.let {
-            weatherDrawable(WeatherGlyphMapper.toCondition(it.tomorrowCode), DayNight.DAY)
-        } ?: R.drawable.ic_remove
+        GlyphSlot.ALARM -> {
+            if (state.alarmSet) R.drawable.ic_alarm else R.drawable.ic_alarm_off
+        }
+        GlyphSlot.WEATHER_NOW -> {
+            weather?.let {
+                weatherDrawable(
+                    WeatherGlyphMapper.toCondition(it.nowCode),
+                    if (it.nowIsDay) DayNight.DAY else DayNight.NIGHT,
+                )
+            } ?: R.drawable.ic_remove
+        }
+        GlyphSlot.WEATHER_TODAY -> {
+            weather?.let {
+                weatherDrawable(WeatherGlyphMapper.toCondition(it.todayCode), DayNight.DAY)
+            } ?: R.drawable.ic_remove
+        }
+        GlyphSlot.WEATHER_TOMORROW -> {
+            weather?.let {
+                weatherDrawable(WeatherGlyphMapper.toCondition(it.tomorrowCode), DayNight.DAY)
+            } ?: R.drawable.ic_remove
+        }
     }
 }
 
@@ -154,10 +202,11 @@ fun DotGrid(state: WidgetRenderState) {
                         // with the dot columns instead of running to the widget edges. The Column
                         // centres it horizontally.
                         Box(
-                            modifier = GlanceModifier
-                                .height(hairlineHeight)
-                                .width(cell * 5)
-                                .background(separatorColor),
+                            modifier =
+                                GlanceModifier
+                                    .height(hairlineHeight)
+                                    .width(cell * 5)
+                                    .background(separatorColor),
                             content = {},
                         )
                     }
@@ -180,56 +229,85 @@ private fun CellImage(
 ) {
     val context = LocalContext.current
     val action = actionForZone(zoneOf(cell, rowKind), state.settings, context)
-    val boxModifier = GlanceModifier.size(cellSize).let {
-        if (action != null) it.clickable(onClick = action) else it
-    }
+    val boxModifier =
+        GlanceModifier.size(cellSize).let {
+            if (action != null) it.clickable(onClick = action) else it
+        }
     val imageModifier = GlanceModifier.size(dotSize)
     Box(modifier = boxModifier, contentAlignment = Alignment.Center) {
         when (cell) {
-            is Cell.Bit -> Image(
-                provider = ImageProvider(if (cell.lit) R.drawable.ic_dot_filled else R.drawable.ic_dot_ring),
-                contentDescription = null,
-                modifier = imageModifier,
-                colorFilter = ColorFilter.tint(if (cell.lit) litColor else dimColor),
-            )
-            is Cell.Glyph -> Image(
-                provider = ImageProvider(resolveGlyph(cell.slot, state)),
-                contentDescription = null,
-                modifier = imageModifier,
-                colorFilter = ColorFilter.tint(glyphColor),
-            )
+            is Cell.Bit -> {
+                Image(
+                    provider = ImageProvider(if (cell.lit) R.drawable.ic_dot_filled else R.drawable.ic_dot_ring),
+                    contentDescription = null,
+                    modifier = imageModifier,
+                    colorFilter = ColorFilter.tint(if (cell.lit) litColor else dimColor),
+                )
+            }
+            is Cell.Glyph -> {
+                Image(
+                    provider = ImageProvider(resolveGlyph(cell.slot, state)),
+                    contentDescription = null,
+                    modifier = imageModifier,
+                    colorFilter = ColorFilter.tint(glyphColor),
+                )
+            }
         }
     }
 }
 
-private fun zoneOf(cell: Cell, rowKind: RowKind): TapZone = when (cell) {
-    is Cell.Glyph -> when (cell.slot) {
-        GlyphSlot.ALARM -> TapZone.ALARM
-        GlyphSlot.WEATHER_NOW, GlyphSlot.WEATHER_TODAY, GlyphSlot.WEATHER_TOMORROW -> TapZone.WEATHER
+private fun zoneOf(
+    cell: Cell,
+    rowKind: RowKind,
+): TapZone =
+    when (cell) {
+        is Cell.Glyph -> {
+            when (cell.slot) {
+                GlyphSlot.ALARM -> TapZone.ALARM
+                GlyphSlot.WEATHER_NOW, GlyphSlot.WEATHER_TODAY, GlyphSlot.WEATHER_TOMORROW -> TapZone.WEATHER
+            }
+        }
+        is Cell.Bit -> {
+            when (rowKind) {
+                RowKind.HOURS, RowKind.MINUTES -> TapZone.TIME
+                RowKind.DAY, RowKind.MONTH -> TapZone.DATE
+            }
+        }
     }
-    is Cell.Bit -> when (rowKind) {
-        RowKind.HOURS, RowKind.MINUTES -> TapZone.TIME
-        RowKind.DAY, RowKind.MONTH -> TapZone.DATE
-    }
-}
 
-private fun actionForZone(zone: TapZone, settings: WidgetSettings, context: Context): Action? =
+private fun actionForZone(
+    zone: TapZone,
+    settings: WidgetSettings,
+    context: Context,
+): Action? =
     when (settings.tapActions[zone] ?: TapAction.NONE) {
-        TapAction.NONE -> null
-        TapAction.OPEN_ALARMS -> actionStartActivity(
-            Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-        TapAction.OPEN_CALENDAR -> actionStartActivity(
-            Intent(
-                Intent.ACTION_VIEW,
-                CalendarContract.CONTENT_URI.buildUpon().appendPath("time")
-                    .appendPath(System.currentTimeMillis().toString()).build(),
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-        TapAction.OPEN_CLOCK -> clockAction(context)
+        TapAction.NONE -> {
+            null
+        }
+        TapAction.OPEN_ALARMS -> {
+            actionStartActivity(
+                Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+        TapAction.OPEN_CALENDAR -> {
+            actionStartActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    CalendarContract.CONTENT_URI
+                        .buildUpon()
+                        .appendPath("time")
+                        .appendPath(System.currentTimeMillis().toString())
+                        .build(),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+        TapAction.OPEN_CLOCK -> {
+            clockAction(context)
+        }
         TapAction.OPEN_APP -> {
             val pkg = settings.tapAppPackages[zone]
-            pkg?.let { context.packageManager.getLaunchIntentForPackage(it) }
+            pkg
+                ?.let { context.packageManager.getLaunchIntentForPackage(it) }
                 ?.let { actionStartActivity(it) }
         }
     }
@@ -241,10 +319,14 @@ private fun actionForZone(zone: TapZone, settings: WidgetSettings, context: Cont
  */
 private fun clockAction(context: Context): Action {
     val showAlarms = Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    val clockPackage = context.packageManager
-        .resolveActivity(showAlarms, 0)?.activityInfo?.packageName
-    val launch = clockPackage
-        ?.let { context.packageManager.getLaunchIntentForPackage(it) }
-        ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val clockPackage =
+        context.packageManager
+            .resolveActivity(showAlarms, 0)
+            ?.activityInfo
+            ?.packageName
+    val launch =
+        clockPackage
+            ?.let { context.packageManager.getLaunchIntentForPackage(it) }
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     return actionStartActivity(launch ?: showAlarms)
 }

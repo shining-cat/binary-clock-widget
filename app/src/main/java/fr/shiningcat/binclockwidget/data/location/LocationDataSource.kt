@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.data.location
 
 import android.Manifest
@@ -22,7 +26,8 @@ class AndroidLocationDataSource(
         val manager = context.getSystemService(LocationManager::class.java) ?: return null
         val providers = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
         return providers.firstNotNullOfOrNull { provider ->
-            runCatching { manager.getLastKnownLocation(provider) }.getOrNull()
+            runCatching { manager.getLastKnownLocation(provider) }
+                .getOrNull()
                 ?.let { it.latitude to it.longitude }
         }
     }

@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.data.settings
 
 import androidx.datastore.core.DataStore
@@ -16,6 +20,7 @@ import kotlinx.coroutines.flow.map
 
 interface SettingsStore {
     fun settings(): Flow<WidgetSettings>
+
     suspend fun update(transform: (WidgetSettings) -> WidgetSettings)
 }
 
@@ -38,13 +43,16 @@ class DataStoreSettingsStore(
             iconColorArgb = this[ICON_COLOR_ARGB], // absent = inherit dots colour
             backgroundColorArgb = this[BACKGROUND_COLOR_ARGB] ?: d.backgroundColorArgb,
             hairline = this[HAIRLINE] ?: d.hairline,
-            tapActions = TapZone.entries.associateWith { zone ->
-                this[actionKey(zone)]?.let { runCatching { TapAction.valueOf(it) }.getOrNull() }
-                    ?: d.tapActions.getValue(zone)
-            },
-            tapAppPackages = TapZone.entries.mapNotNull { zone ->
-                this[packageKey(zone)]?.let { zone to it }
-            }.toMap(),
+            tapActions =
+                TapZone.entries.associateWith { zone ->
+                    this[actionKey(zone)]?.let { runCatching { TapAction.valueOf(it) }.getOrNull() }
+                        ?: d.tapActions.getValue(zone)
+                },
+            tapAppPackages =
+                TapZone.entries
+                    .mapNotNull { zone ->
+                        this[packageKey(zone)]?.let { zone to it }
+                    }.toMap(),
         )
     }
 
@@ -67,7 +75,9 @@ class DataStoreSettingsStore(
         val ICON_COLOR_ARGB = intPreferencesKey("icon_color_argb")
         val BACKGROUND_COLOR_ARGB = intPreferencesKey("background_color_argb")
         val HAIRLINE = booleanPreferencesKey("hairline")
+
         fun actionKey(zone: TapZone) = stringPreferencesKey("tap_action_${zone.name}")
+
         fun packageKey(zone: TapZone) = stringPreferencesKey("tap_pkg_${zone.name}")
     }
 }

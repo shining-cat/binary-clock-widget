@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.widget
 
 import android.appwidget.AppWidgetManager
@@ -23,13 +27,14 @@ class BinClockReceiver : GlanceAppWidgetReceiver() {
     override fun onEnabled(context: Context) {
         super.onEnabled(context)
         TickScheduler.schedule(context)
-        val request = PeriodicWorkRequestBuilder<WeatherRefreshWorker>(30, TimeUnit.MINUTES)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build(),
-            )
-            .build()
+        val request =
+            PeriodicWorkRequestBuilder<WeatherRefreshWorker>(30, TimeUnit.MINUTES)
+                .setConstraints(
+                    Constraints
+                        .Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build(),
+                ).build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             WeatherRefreshWorker.UNIQUE_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
@@ -43,7 +48,10 @@ class BinClockReceiver : GlanceAppWidgetReceiver() {
         WorkManager.getInstance(context).cancelUniqueWork(WeatherRefreshWorker.UNIQUE_NAME)
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         super.onReceive(context, intent)
         // The last widget was removed: onDisabled already cancelled the tick, so don't resurrect it.
         if (intent.action == AppWidgetManager.ACTION_APPWIDGET_DISABLED) return

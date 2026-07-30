@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.config
 
 import fr.shiningcat.binclockwidget.data.settings.SettingsStore
@@ -25,13 +29,17 @@ private class FakeSettingsStore(
     initial: WidgetSettings = WidgetSettings(),
 ) : SettingsStore {
     val state = MutableStateFlow(initial)
+
     override fun settings(): Flow<WidgetSettings> = state
+
     override suspend fun update(transform: (WidgetSettings) -> WidgetSettings) {
         state.value = transform(state.value)
     }
 }
 
-private class FakeLocationChecker(var granted: Boolean) : () -> Boolean {
+private class FakeLocationChecker(
+    var granted: Boolean,
+) : () -> Boolean {
     override fun invoke(): Boolean = granted
 }
 
@@ -40,8 +48,7 @@ class SettingsViewModelTest {
     private val store = FakeSettingsStore()
     private val checker = FakeLocationChecker(granted = false)
 
-    private fun viewModel(materialYouAvailable: Boolean = true) =
-        SettingsViewModel(store, checker, materialYouAvailable)
+    private fun viewModel(materialYouAvailable: Boolean = true) = SettingsViewModel(store, checker, materialYouAvailable)
 
     @BeforeEach
     fun setUp() {
@@ -58,112 +65,120 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `initial state is Loading then Ready reflecting store, permission and materialYou`() = runTest {
-        checker.granted = true
-        val vm = viewModel(materialYouAvailable = true)
+    fun `initial state is Loading then Ready reflecting store, permission and materialYou`() =
+        runTest {
+            checker.granted = true
+            val vm = viewModel(materialYouAvailable = true)
 
-        assertEquals(SettingsUiState.Loading, vm.uiState.value)
+            assertEquals(SettingsUiState.Loading, vm.uiState.value)
 
-        collect(vm)
-        advanceUntilIdle()
+            collect(vm)
+            advanceUntilIdle()
 
-        val ready = vm.uiState.value as SettingsUiState.Ready
-        assertEquals(store.state.value, ready.settings)
-        assertTrue(ready.locationGranted)
-        assertTrue(ready.materialYouAvailable)
-    }
-
-    @Test
-    fun `onColorChanged writes through to store and state`() = runTest {
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
-
-        vm.onColorChanged(0xFF00FF00.toInt())
-        advanceUntilIdle()
-
-        assertEquals(0xFF00FF00.toInt(), store.state.value.colorArgb)
-        val ready = vm.uiState.value as SettingsUiState.Ready
-        assertEquals(0xFF00FF00.toInt(), ready.settings.colorArgb)
-    }
+            val ready = vm.uiState.value as SettingsUiState.Ready
+            assertEquals(store.state.value, ready.settings)
+            assertTrue(ready.locationGranted)
+            assertTrue(ready.materialYouAvailable)
+        }
 
     @Test
-    fun `onIconColorChanged sets a value then null resets to inherit`() = runTest {
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
+    fun `onColorChanged writes through to store and state`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
 
-        vm.onIconColorChanged(0xFF112233.toInt())
-        advanceUntilIdle()
-        assertEquals(0xFF112233.toInt(), store.state.value.iconColorArgb)
+            vm.onColorChanged(0xFF00FF00.toInt())
+            advanceUntilIdle()
 
-        vm.onIconColorChanged(null)
-        advanceUntilIdle()
-        assertEquals(null, store.state.value.iconColorArgb)
-    }
-
-    @Test
-    fun `onHairlineToggled writes through`() = runTest {
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
-
-        vm.onHairlineToggled(true)
-        advanceUntilIdle()
-
-        assertTrue(store.state.value.hairline)
-        assertTrue((vm.uiState.value as SettingsUiState.Ready).settings.hairline)
-    }
+            assertEquals(0xFF00FF00.toInt(), store.state.value.colorArgb)
+            val ready = vm.uiState.value as SettingsUiState.Ready
+            assertEquals(0xFF00FF00.toInt(), ready.settings.colorArgb)
+        }
 
     @Test
-    fun `onTapActionChanged updates the zone action`() = runTest {
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
+    fun `onIconColorChanged sets a value then null resets to inherit`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
 
-        vm.onTapActionChanged(TapZone.WEATHER, TapAction.OPEN_APP)
-        advanceUntilIdle()
+            vm.onIconColorChanged(0xFF112233.toInt())
+            advanceUntilIdle()
+            assertEquals(0xFF112233.toInt(), store.state.value.iconColorArgb)
 
-        assertEquals(TapAction.OPEN_APP, store.state.value.tapActions[TapZone.WEATHER])
-    }
-
-    @Test
-    fun `onMaterialYouToggled writes through`() = runTest {
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
-
-        vm.onMaterialYouToggled(true)
-        advanceUntilIdle()
-
-        assertTrue(store.state.value.useMaterialYou)
-    }
+            vm.onIconColorChanged(null)
+            advanceUntilIdle()
+            assertEquals(null, store.state.value.iconColorArgb)
+        }
 
     @Test
-    fun `onTapAppPackageChanged updates the zone package`() = runTest {
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
+    fun `onHairlineToggled writes through`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
 
-        vm.onTapAppPackageChanged(TapZone.WEATHER, "com.example")
-        advanceUntilIdle()
+            vm.onHairlineToggled(true)
+            advanceUntilIdle()
 
-        assertEquals("com.example", store.state.value.tapAppPackages[TapZone.WEATHER])
-    }
+            assertTrue(store.state.value.hairline)
+            assertTrue((vm.uiState.value as SettingsUiState.Ready).settings.hairline)
+        }
 
     @Test
-    fun `refreshPermission re-reads the injected checker`() = runTest {
-        checker.granted = false
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
+    fun `onTapActionChanged updates the zone action`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
 
-        assertEquals(false, (vm.uiState.value as SettingsUiState.Ready).locationGranted)
+            vm.onTapActionChanged(TapZone.WEATHER, TapAction.OPEN_APP)
+            advanceUntilIdle()
 
-        checker.granted = true
-        vm.refreshPermission()
-        advanceUntilIdle()
+            assertEquals(TapAction.OPEN_APP, store.state.value.tapActions[TapZone.WEATHER])
+        }
 
-        assertTrue((vm.uiState.value as SettingsUiState.Ready).locationGranted)
-    }
+    @Test
+    fun `onMaterialYouToggled writes through`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
+
+            vm.onMaterialYouToggled(true)
+            advanceUntilIdle()
+
+            assertTrue(store.state.value.useMaterialYou)
+        }
+
+    @Test
+    fun `onTapAppPackageChanged updates the zone package`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
+
+            vm.onTapAppPackageChanged(TapZone.WEATHER, "com.example")
+            advanceUntilIdle()
+
+            assertEquals("com.example", store.state.value.tapAppPackages[TapZone.WEATHER])
+        }
+
+    @Test
+    fun `refreshPermission re-reads the injected checker`() =
+        runTest {
+            checker.granted = false
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
+
+            assertEquals(false, (vm.uiState.value as SettingsUiState.Ready).locationGranted)
+
+            checker.granted = true
+            vm.refreshPermission()
+            advanceUntilIdle()
+
+            assertTrue((vm.uiState.value as SettingsUiState.Ready).locationGranted)
+        }
 }

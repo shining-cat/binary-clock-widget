@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.widget
 
 import fr.shiningcat.binclockwidget.data.alarm.AlarmDataSource
@@ -14,10 +18,11 @@ class WidgetStateResolver(
     private val weather: WeatherRepository,
     private val settings: SettingsStore,
 ) {
-    suspend fun resolve(): WidgetRenderState = WidgetRenderState(
-        face = TimeEncoder.encode(now()),
-        alarmSet = alarm.isAlarmSet(),
-        weather = weather.cached(),
-        settings = settings.settings().first(),
-    )
+    suspend fun resolve(): WidgetRenderState =
+        WidgetRenderState(
+            face = TimeEncoder.encode(now()),
+            alarmSet = alarm.isAlarmSet(),
+            weather = weather.cached(),
+            settings = settings.settings().first(),
+        )
 }

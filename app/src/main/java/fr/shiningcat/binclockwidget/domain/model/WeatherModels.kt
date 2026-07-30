@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.domain.model
 
 enum class DayNight { DAY, NIGHT }
+
 enum class WeatherCondition {
     CLEAR,
     PARTLY_CLOUDY,
@@ -12,7 +17,7 @@ enum class WeatherCondition {
     RAIN_SHOWERS,
     SNOW_SHOWERS,
     THUNDERSTORM,
-    UNKNOWN
+    UNKNOWN,
 }
 
 /** One resolved weather picture for the widget. */

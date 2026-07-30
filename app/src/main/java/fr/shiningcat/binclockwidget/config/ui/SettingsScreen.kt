@@ -1,9 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.config.ui
 
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +54,10 @@ import fr.shiningcat.binclockwidget.domain.model.TapZone
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
 
 /** An installed, launchable app the user can bind a tap zone to. */
-data class InstalledApp(val packageName: String, val label: String)
+data class InstalledApp(
+    val packageName: String,
+    val label: String,
+)
 
 /** Which colour a bottom-sheet picker is editing. */
 private enum class ColorTarget { DOTS, ICONS, BACKGROUND }
@@ -61,15 +67,15 @@ private enum class ColorTarget { DOTS, ICONS, BACKGROUND }
  * dropdown can render the current value; irrelevant actions (e.g. calendar on the alarm
  * zone) are deliberately omitted for a sensible UX.
  */
-fun tapActionOptions(zone: TapZone): List<TapAction> = when (zone) {
-    TapZone.ALARM -> listOf(TapAction.NONE, TapAction.OPEN_ALARMS, TapAction.OPEN_APP)
-    TapZone.TIME -> listOf(TapAction.NONE, TapAction.OPEN_CLOCK, TapAction.OPEN_ALARMS, TapAction.OPEN_APP)
-    TapZone.DATE -> listOf(TapAction.NONE, TapAction.OPEN_CALENDAR, TapAction.OPEN_APP)
-    TapZone.WEATHER -> listOf(TapAction.NONE, TapAction.OPEN_APP)
-}
+fun tapActionOptions(zone: TapZone): List<TapAction> =
+    when (zone) {
+        TapZone.ALARM -> listOf(TapAction.NONE, TapAction.OPEN_ALARMS, TapAction.OPEN_APP)
+        TapZone.TIME -> listOf(TapAction.NONE, TapAction.OPEN_CLOCK, TapAction.OPEN_ALARMS, TapAction.OPEN_APP)
+        TapZone.DATE -> listOf(TapAction.NONE, TapAction.OPEN_CALENDAR, TapAction.OPEN_APP)
+        TapZone.WEATHER -> listOf(TapAction.NONE, TapAction.OPEN_APP)
+    }
 
-fun sortAppsByLabel(apps: List<InstalledApp>): List<InstalledApp> =
-    apps.distinctBy { it.packageName }.sortedBy { it.label.lowercase() }
+fun sortAppsByLabel(apps: List<InstalledApp>): List<InstalledApp> = apps.distinctBy { it.packageName }.sortedBy { it.label.lowercase() }
 
 private fun loadLaunchableApps(pm: PackageManager): List<InstalledApp> {
     val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
@@ -115,19 +121,23 @@ private fun SettingsScreen(
     onConfirm: () -> Unit,
 ) {
     when (state) {
-        SettingsUiState.Loading -> Unit
-        is SettingsUiState.Ready -> ReadySettings(
-            state = state,
-            onColorChanged = onColorChanged,
-            onIconColorChanged = onIconColorChanged,
-            onBackgroundColorChanged = onBackgroundColorChanged,
-            onMaterialYouToggled = onMaterialYouToggled,
-            onHairlineToggled = onHairlineToggled,
-            onTapActionChanged = onTapActionChanged,
-            onTapAppPackageChanged = onTapAppPackageChanged,
-            onRequestLocation = onRequestLocation,
-            onConfirm = onConfirm,
-        )
+        SettingsUiState.Loading -> {
+            Unit
+        }
+        is SettingsUiState.Ready -> {
+            ReadySettings(
+                state = state,
+                onColorChanged = onColorChanged,
+                onIconColorChanged = onIconColorChanged,
+                onBackgroundColorChanged = onBackgroundColorChanged,
+                onMaterialYouToggled = onMaterialYouToggled,
+                onHairlineToggled = onHairlineToggled,
+                onTapActionChanged = onTapActionChanged,
+                onTapAppPackageChanged = onTapAppPackageChanged,
+                onRequestLocation = onRequestLocation,
+                onConfirm = onConfirm,
+            )
+        }
     }
 }
 
@@ -151,94 +161,97 @@ private fun ReadySettings(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Cheatsheet()
 
-        Section("Colour") {
-            if (state.materialYouAvailable) {
+            Section("Colour") {
+                if (state.materialYouAvailable) {
+                    ToggleRow(
+                        label = "Use Material You",
+                        checked = settings.useMaterialYou,
+                        onCheckedChange = onMaterialYouToggled,
+                    )
+                }
+                if (settings.useMaterialYou) {
+                    // Dots + icons follow the wallpaper; the background stays a manual choice so pure
+                    // AMOLED black is preserved even under Material You.
+                    Text(
+                        text = "Dots and icons follow your wallpaper.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    ColorRow("Dots", settings.colorArgb) { activeColorTarget = ColorTarget.DOTS }
+                    ColorRow(
+                        label = "Icons",
+                        argb = settings.iconColorArgb ?: settings.colorArgb,
+                        subtitle = if (settings.iconColorArgb == null) "Same as dots" else null,
+                    ) { activeColorTarget = ColorTarget.ICONS }
+                }
+                ColorRow("Background", settings.backgroundColorArgb) {
+                    activeColorTarget = ColorTarget.BACKGROUND
+                }
+            }
+
+            Section("Hairline separator") {
                 ToggleRow(
-                    label = "Use Material You",
-                    checked = settings.useMaterialYou,
-                    onCheckedChange = onMaterialYouToggled,
+                    label = "Show separator",
+                    checked = settings.hairline,
+                    onCheckedChange = onHairlineToggled,
                 )
             }
-            if (settings.useMaterialYou) {
-                // Dots + icons follow the wallpaper; the background stays a manual choice so pure
-                // AMOLED black is preserved even under Material You.
+
+            Section("Tap actions") {
+                TapZone.entries.forEach { zone ->
+                    TapZoneSetting(
+                        zone = zone,
+                        settings = settings,
+                        apps = apps,
+                        onTapActionChanged = onTapActionChanged,
+                        onTapAppPackageChanged = onTapAppPackageChanged,
+                    )
+                }
+            }
+
+            Section("Location") {
                 Text(
-                    text = "Dots and icons follow your wallpaper.",
+                    text =
+                        if (state.locationGranted) {
+                            "Location permission granted — weather can update."
+                        } else {
+                            "Location permission is required to show local weather."
+                        },
                     style = MaterialTheme.typography.bodyMedium,
                 )
-            } else {
-                ColorRow("Dots", settings.colorArgb) { activeColorTarget = ColorTarget.DOTS }
-                ColorRow(
-                    label = "Icons",
-                    argb = settings.iconColorArgb ?: settings.colorArgb,
-                    subtitle = if (settings.iconColorArgb == null) "Same as dots" else null,
-                ) { activeColorTarget = ColorTarget.ICONS }
+                Button(
+                    onClick = onRequestLocation,
+                    enabled = !state.locationGranted,
+                ) {
+                    Text("Grant location")
+                }
             }
-            ColorRow("Background", settings.backgroundColorArgb) {
-                activeColorTarget = ColorTarget.BACKGROUND
-            }
-        }
-
-        Section("Hairline separator") {
-            ToggleRow(
-                label = "Show separator",
-                checked = settings.hairline,
-                onCheckedChange = onHairlineToggled,
-            )
-        }
-
-        Section("Tap actions") {
-            TapZone.entries.forEach { zone ->
-                TapZoneSetting(
-                    zone = zone,
-                    settings = settings,
-                    apps = apps,
-                    onTapActionChanged = onTapActionChanged,
-                    onTapAppPackageChanged = onTapAppPackageChanged,
-                )
-            }
-        }
-
-        Section("Location") {
-            Text(
-                text = if (state.locationGranted) {
-                    "Location permission granted — weather can update."
-                } else {
-                    "Location permission is required to show local weather."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Button(
-                onClick = onRequestLocation,
-                enabled = !state.locationGranted,
-            ) {
-                Text("Grant location")
-            }
-        }
-
         }
         // Pinned footer: Done stays visible regardless of scroll, and the note reassures the user
         // their edits are already saved (persisted on every change) and appear on the widget as
         // soon as they leave this screen.
         HorizontalDivider()
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Your changes are saved automatically and appear on the widget as soon " +
-                    "as you leave this screen.",
+                text =
+                    "Your changes are saved automatically and appear on the widget as soon " +
+                        "as you leave this screen.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -275,27 +288,30 @@ private fun ColorPickerSheet(
 ) {
     val sheetState = rememberModalBottomSheetState()
     // Seed once from the effective colour for this target; icons fall back to the dots colour.
-    val initialColor = when (target) {
-        ColorTarget.DOTS -> settings.colorArgb
-        ColorTarget.ICONS -> settings.iconColorArgb ?: settings.colorArgb
-        ColorTarget.BACKGROUND -> settings.backgroundColorArgb
-    }
+    val initialColor =
+        when (target) {
+            ColorTarget.DOTS -> settings.colorArgb
+            ColorTarget.ICONS -> settings.iconColorArgb ?: settings.colorArgb
+            ColorTarget.BACKGROUND -> settings.backgroundColorArgb
+        }
     // Live preview tracks the picker's emissions directly, so the header swatch updates as the user
     // drags — independent of the widget, which only repaints on the next clock update.
     var preview by remember { mutableStateOf(initialColor) }
     val showAlpha = target == ColorTarget.BACKGROUND
-    val onPicked: (Int) -> Unit = when (target) {
-        ColorTarget.DOTS -> onColorChanged
-        ColorTarget.ICONS -> { argb -> onIconColorChanged(argb) }
-        ColorTarget.BACKGROUND -> onBackgroundColorChanged
-    }
+    val onPicked: (Int) -> Unit =
+        when (target) {
+            ColorTarget.DOTS -> onColorChanged
+            ColorTarget.ICONS -> { argb -> onIconColorChanged(argb) }
+            ColorTarget.BACKGROUND -> onBackgroundColorChanged
+        }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(
@@ -304,11 +320,12 @@ private fun ColorPickerSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = when (target) {
-                        ColorTarget.DOTS -> "Dots colour"
-                        ColorTarget.ICONS -> "Icon colour"
-                        ColorTarget.BACKGROUND -> "Background colour"
-                    },
+                    text =
+                        when (target) {
+                            ColorTarget.DOTS -> "Dots colour"
+                            ColorTarget.ICONS -> "Icon colour"
+                            ColorTarget.BACKGROUND -> "Background colour"
+                        },
                     style = MaterialTheme.typography.titleMedium,
                 )
                 ColorSwatch(preview, size = 40.dp)
@@ -337,15 +354,17 @@ private fun ColorPickerSheet(
 private fun Cheatsheet() {
     Section("How to read the clock") {
         Text(
-            text = "Each row is a number in binary. A filled dot counts, a hollow ring " +
-                "does not — add the place values of the filled dots to read the number. " +
-                "Rows, top to bottom: hours, minutes, day of month, month.",
+            text =
+                "Each row is a number in binary. A filled dot counts, a hollow ring " +
+                    "does not — add the place values of the filled dots to read the number. " +
+                    "Rows, top to bottom: hours, minutes, day of month, month.",
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = "Glyphs: the icon on the hours row shows the alarm (a bell when one is " +
-                "set, struck through when none). The icons on the last two rows show the " +
-                "weather now, today and tomorrow.",
+            text =
+                "Glyphs: the icon on the hours row shows the alarm (a bell when one is " +
+                    "set, struck through when none). The icons on the last two rows show the " +
+                    "weather now, today and tomorrow.",
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -371,8 +390,9 @@ private fun TapZoneSetting(
         val selectedPackage = settings.tapAppPackages[zone]
         LabeledDropdown(
             label = "App",
-            selectedLabel = apps.firstOrNull { it.packageName == selectedPackage }?.label
-                ?: "Choose an app",
+            selectedLabel =
+                apps.firstOrNull { it.packageName == selectedPackage }?.label
+                    ?: "Choose an app",
             options = apps,
             optionLabel = { it.label },
             onSelected = { onTapAppPackageChanged(zone, it.packageName) },
@@ -381,7 +401,10 @@ private fun TapZoneSetting(
 }
 
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
+private fun Section(
+    title: String,
+    content: @Composable () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = title, style = MaterialTheme.typography.titleMedium)
         HorizontalDivider()
@@ -390,7 +413,11 @@ private fun Section(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+private fun ToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -407,12 +434,18 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
  * column compact — the picker itself lives in a bottom sheet.
  */
 @Composable
-private fun ColorRow(label: String, argb: Int, subtitle: String? = null, onClick: () -> Unit) {
+private fun ColorRow(
+    label: String,
+    argb: Int,
+    subtitle: String? = null,
+    onClick: () -> Unit,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -435,13 +468,17 @@ private fun ColorRow(label: String, argb: Int, subtitle: String? = null, onClick
  * transparent rather than blending invisibly into the surface.
  */
 @Composable
-private fun ColorSwatch(argb: Int, size: Dp = 28.dp) {
+private fun ColorSwatch(
+    argb: Int,
+    size: Dp = 28.dp,
+) {
     val shape = RoundedCornerShape(6.dp)
     Box(
-        modifier = Modifier
-            .size(size)
-            .clip(shape)
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape),
+        modifier =
+            Modifier
+                .size(size)
+                .clip(shape)
+                .border(1.dp, MaterialTheme.colorScheme.outline, shape),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCheckerboard()
@@ -470,9 +507,10 @@ private fun <T> LabeledDropdown(
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth(),
         )
         ExposedDropdownMenu(
             expanded = expanded,
@@ -491,17 +529,19 @@ private fun <T> LabeledDropdown(
     }
 }
 
-private fun zoneLabel(zone: TapZone): String = when (zone) {
-    TapZone.ALARM -> "Alarm"
-    TapZone.TIME -> "Time"
-    TapZone.DATE -> "Date"
-    TapZone.WEATHER -> "Weather"
-}
+private fun zoneLabel(zone: TapZone): String =
+    when (zone) {
+        TapZone.ALARM -> "Alarm"
+        TapZone.TIME -> "Time"
+        TapZone.DATE -> "Date"
+        TapZone.WEATHER -> "Weather"
+    }
 
-private fun actionLabel(action: TapAction): String = when (action) {
-    TapAction.NONE -> "Do nothing"
-    TapAction.OPEN_ALARMS -> "Open alarms"
-    TapAction.OPEN_CLOCK -> "Open clock"
-    TapAction.OPEN_CALENDAR -> "Open calendar"
-    TapAction.OPEN_APP -> "Open an app"
-}
+private fun actionLabel(action: TapAction): String =
+    when (action) {
+        TapAction.NONE -> "Do nothing"
+        TapAction.OPEN_ALARMS -> "Open alarms"
+        TapAction.OPEN_CLOCK -> "Open clock"
+        TapAction.OPEN_CALENDAR -> "Open calendar"
+        TapAction.OPEN_APP -> "Open an app"
+    }

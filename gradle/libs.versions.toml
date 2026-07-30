@@ -3,6 +3,12 @@
 agp = "9.3.1"
 kotlin = "2.4.0"
 
+# Static analysis / quality
+ktlintGradlePlugin = "14.2.0"
+spotless = "8.8.0"
+kover = "0.9.8"
+dependencyUpdatePlugin = "0.54.0"
+
 # AndroidX / Compose (pinned to the SDK-37 train; compileSdk is 37)
 composeBom = "2026.06.01"
 activityCompose = "1.13.0"
@@ -75,3 +81,9 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+# Static analysis / quality
+ktlint-gradle = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradlePlugin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+dependencyupdate = { id = "com.github.ben-manes.versions", version.ref = "dependencyUpdatePlugin" }

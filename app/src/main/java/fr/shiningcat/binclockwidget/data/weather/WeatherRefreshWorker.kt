@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.data.weather
 
 import android.content.Context
@@ -12,7 +16,8 @@ import org.koin.core.component.inject
 class WeatherRefreshWorker(
     appContext: Context,
     params: WorkerParameters,
-) : CoroutineWorker(appContext, params), KoinComponent {
+) : CoroutineWorker(appContext, params),
+    KoinComponent {
     // Workers are instantiated by WorkManager, so dependencies are resolved via Koin.
     private val location: LocationDataSource by inject()
     private val weatherRepository: WeatherRepository by inject()

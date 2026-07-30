@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.config
 
 import androidx.lifecycle.ViewModel
@@ -15,6 +19,7 @@ import kotlinx.coroutines.launch
 
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState
+
     data class Ready(
         val settings: WidgetSettings,
         val locationGranted: Boolean,
@@ -45,11 +50,15 @@ class SettingsViewModel(
 
     fun onHairlineToggled(enabled: Boolean) = mutate { it.copy(hairline = enabled) }
 
-    fun onTapActionChanged(zone: TapZone, action: TapAction) =
-        mutate { it.copy(tapActions = it.tapActions + (zone to action)) }
+    fun onTapActionChanged(
+        zone: TapZone,
+        action: TapAction,
+    ) = mutate { it.copy(tapActions = it.tapActions + (zone to action)) }
 
-    fun onTapAppPackageChanged(zone: TapZone, pkg: String?) =
-        mutate { it.copy(tapAppPackages = it.tapAppPackages + (zone to pkg)) }
+    fun onTapAppPackageChanged(
+        zone: TapZone,
+        pkg: String?,
+    ) = mutate { it.copy(tapAppPackages = it.tapAppPackages + (zone to pkg)) }
 
     fun refreshPermission() {
         permission.value = locationGranted()

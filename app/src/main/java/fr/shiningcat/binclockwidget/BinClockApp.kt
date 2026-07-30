@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget
 
 import android.app.Application
@@ -22,10 +26,11 @@ class BinClockApp : Application() {
      * place background failures on this scope are logged: without it an uncaught throw from any
      * launch would reach the JVM default handler and crash the process with no domain context.
      */
-    val applicationScope = CoroutineScope(
-        SupervisorJob() + Dispatchers.Default +
-            CoroutineExceptionHandler { _, e -> Log.e("BinClockApp", "Background task failed", e) },
-    )
+    val applicationScope =
+        CoroutineScope(
+            SupervisorJob() + Dispatchers.Default +
+                CoroutineExceptionHandler { _, e -> Log.e("BinClockApp", "Background task failed", e) },
+        )
 
     override fun onCreate() {
         super.onCreate()

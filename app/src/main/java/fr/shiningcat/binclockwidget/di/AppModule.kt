@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 shining-cat
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 package fr.shiningcat.binclockwidget.di
 
 import android.Manifest
@@ -35,60 +39,62 @@ import java.time.LocalDateTime
  * (OkHttp/Retrofit) is built once and reused; the same [WeatherRepository] serves both the
  * per-minute render path (`cached()`) and the refresh worker (`refresh()`).
  */
-val appModule = module {
-    single(named(SETTINGS_DATASTORE)) {
-        PreferenceDataStoreFactory.create {
-            androidContext().preferencesDataStoreFile(SETTINGS_DATASTORE)
+val appModule =
+    module {
+        single(named(SETTINGS_DATASTORE)) {
+            PreferenceDataStoreFactory.create {
+                androidContext().preferencesDataStoreFile(SETTINGS_DATASTORE)
+            }
+        }
+        single(named(WEATHER_DATASTORE)) {
+            PreferenceDataStoreFactory.create {
+                androidContext().preferencesDataStoreFile(WEATHER_DATASTORE)
+            }
+        }
+
+        single<SettingsStore> { DataStoreSettingsStore(get(named(SETTINGS_DATASTORE))) }
+        single<WeatherCache> { DataStoreWeatherCache(get(named(WEATHER_DATASTORE))) }
+
+        single { Json { ignoreUnknownKeys = true } }
+        single { OkHttpClient() }
+        single {
+            Retrofit
+                .Builder()
+                .baseUrl("https://api.open-meteo.com/")
+                .client(get())
+                .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
+                .build()
+        }
+        single { get<Retrofit>().create(OpenMeteoApi::class.java) }
+
+        single<WeatherRepository> { WeatherRepositoryImpl(get(), get()) }
+
+        single<LocationDataSource> { AndroidLocationDataSource(androidContext()) }
+        single<AlarmDataSource> { AndroidAlarmDataSource(androidContext()) }
+
+        single {
+            WidgetStateResolver(
+                now = { LocalDateTime.now() },
+                alarm = get(),
+                weather = get(),
+                settings = get(),
+            )
+        }
+
+        viewModel {
+            val appContext = androidContext()
+            SettingsViewModel(
+                store = get(),
+                locationGranted = {
+                    ContextCompat.checkSelfPermission(
+                        appContext,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    ) == PackageManager.PERMISSION_GRANTED
+                },
+                materialYouAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+            )
         }
     }
-    single(named(WEATHER_DATASTORE)) {
-        PreferenceDataStoreFactory.create {
-            androidContext().preferencesDataStoreFile(WEATHER_DATASTORE)
-        }
-    }
-
-    single<SettingsStore> { DataStoreSettingsStore(get(named(SETTINGS_DATASTORE))) }
-    single<WeatherCache> { DataStoreWeatherCache(get(named(WEATHER_DATASTORE))) }
-
-    single { Json { ignoreUnknownKeys = true } }
-    single { OkHttpClient() }
-    single {
-        Retrofit.Builder()
-            .baseUrl("https://api.open-meteo.com/")
-            .client(get())
-            .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
-            .build()
-    }
-    single { get<Retrofit>().create(OpenMeteoApi::class.java) }
-
-    single<WeatherRepository> { WeatherRepositoryImpl(get(), get()) }
-
-    single<LocationDataSource> { AndroidLocationDataSource(androidContext()) }
-    single<AlarmDataSource> { AndroidAlarmDataSource(androidContext()) }
-
-    single {
-        WidgetStateResolver(
-            now = { LocalDateTime.now() },
-            alarm = get(),
-            weather = get(),
-            settings = get(),
-        )
-    }
-
-    viewModel {
-        val appContext = androidContext()
-        SettingsViewModel(
-            store = get(),
-            locationGranted = {
-                ContextCompat.checkSelfPermission(
-                    appContext,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                ) == PackageManager.PERMISSION_GRANTED
-            },
-            materialYouAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-        )
-    }
-}
 
 private const val SETTINGS_DATASTORE = "settings"
 private const val WEATHER_DATASTORE = "weather"
