@@ -5,6 +5,18 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- deliberately NO USE_EXACT_ALARM / SCHEDULE_EXACT_ALARM -->
 
+    <!--
+      Android 11+ package visibility: without this, queryIntentActivities returns only a
+      handful of visible apps, so the tap-zone app picker looks like a fixed short list.
+      Declaring the launcher intent (not QUERY_ALL_PACKAGES) keeps it F-Droid-clean.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:name=".BinClockApp"
         android:label="@string/app_name"

@@ -198,9 +198,25 @@ private fun actionForZone(zone: TapZone, settings: WidgetSettings, context: Cont
                     .appendPath(System.currentTimeMillis().toString()).build(),
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
-        TapAction.OPEN_CLOCK, TapAction.OPEN_APP -> {
+        TapAction.OPEN_CLOCK -> clockAction(context)
+        TapAction.OPEN_APP -> {
             val pkg = settings.tapAppPackages[zone]
             pkg?.let { context.packageManager.getLaunchIntentForPackage(it) }
                 ?.let { actionStartActivity(it) }
         }
     }
+
+/**
+ * "Open clock" has no stored package, so resolve the default clock app's launcher entry
+ * (its main clock/time screen), falling back to the system alarms screen. Package visibility
+ * for the resolve is covered by the launcher <queries> block in the manifest.
+ */
+private fun clockAction(context: Context): Action {
+    val showAlarms = Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val clockPackage = context.packageManager
+        .resolveActivity(showAlarms, 0)?.activityInfo?.packageName
+    val launch = clockPackage
+        ?.let { context.packageManager.getLaunchIntentForPackage(it) }
+        ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    return actionStartActivity(launch ?: showAlarms)
+}
