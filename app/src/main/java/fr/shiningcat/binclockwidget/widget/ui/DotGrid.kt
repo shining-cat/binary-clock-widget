@@ -44,7 +44,7 @@ import fr.shiningcat.binclockwidget.domain.model.WeatherCondition
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
 import fr.shiningcat.binclockwidget.widget.model.WidgetRenderState
 
-private val hairlineHeight = 1.dp
+private val hairlineHeight = 2.dp
 
 /**
  * Glance 1.1.x marks every runtime-Color ColorProvider factory @RestrictTo; the public
@@ -98,8 +98,12 @@ fun DotGrid(state: WidgetRenderState) {
             } else {
                 ArgbColorProvider(Color(state.settings.colorArgb))
             }
+        // Off-dots must stay clearly dimmer than lit ones, but visible on AMOLED black.
         val dimColor: ColorProvider =
-            ArgbColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.14f))
+            ArgbColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.30f))
+        // Separator reads stronger than the off-dots so a 2dp line is unmistakable.
+        val separatorColor: ColorProvider =
+            ArgbColorProvider(Color(state.settings.colorArgb).copy(alpha = 0.55f))
 
         val size = LocalSize.current
         val cell = minOf(size.width / 6, size.height / 4)
@@ -127,7 +131,7 @@ fun DotGrid(state: WidgetRenderState) {
                             modifier = GlanceModifier
                                 .height(hairlineHeight)
                                 .width(cell * 6)
-                                .background(dimColor),
+                                .background(separatorColor),
                         )
                     }
                 }

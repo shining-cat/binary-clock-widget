@@ -3,8 +3,13 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!--
+      Fill-based annulus (not a stroke): tints identically to ic_dot_filled via ColorFilter.
+      Outer radius 6 == ic_dot_filled radius, so the "off" state is never larger than "on".
+      evenOdd carves the inner radius-3 hole.
+    -->
     <path
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2"
-        android:pathData="M5,12 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 z" />
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M12,6 a6,6 0 1,0 0,12 a6,6 0 1,0 0,-12 z M12,9 a3,3 0 1,0 0,6 a3,3 0 1,0 0,-6 z" />
 </vector>
