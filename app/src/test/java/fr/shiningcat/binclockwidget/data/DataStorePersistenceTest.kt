@@ -81,4 +81,30 @@ class DataStorePersistenceTest {
             assertEquals(TapAction.OPEN_ALARMS, result.tapActions[TapZone.ALARM])
             assertEquals("com.x", result.tapAppPackages[TapZone.WEATHER])
         }
+
+    @Test
+    fun `icon colour round-trips and null removes the key`(@TempDir dir: File) =
+        runTest(UnconfinedTestDispatcher()) {
+            val settings: SettingsStore =
+                DataStoreSettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
+
+            // A set icon colour persists and reads back.
+            settings.update { it.copy(iconColorArgb = 0xFF112233.toInt()) }
+            assertEquals(0xFF112233.toInt(), settings.settings().first().iconColorArgb)
+
+            // Resetting to "inherit dots" must REMOVE the key, not leave the previous value behind —
+            // otherwise "reset to dots colour" would silently keep the old icon colour.
+            settings.update { it.copy(iconColorArgb = null) }
+            assertNull(settings.settings().first().iconColorArgb)
+        }
+
+    @Test
+    fun `background colour round-trips including alpha`(@TempDir dir: File) =
+        runTest(UnconfinedTestDispatcher()) {
+            val settings: SettingsStore =
+                DataStoreSettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
+            // Translucent value exercises the alpha channel that is the whole point of the field.
+            settings.update { it.copy(backgroundColorArgb = 0x80FF0000.toInt()) }
+            assertEquals(0x80FF0000.toInt(), settings.settings().first().backgroundColorArgb)
+        }
 }

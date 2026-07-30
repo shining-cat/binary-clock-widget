@@ -88,6 +88,21 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `onIconColorChanged sets a value then null resets to inherit`() = runTest {
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        vm.onIconColorChanged(0xFF112233.toInt())
+        advanceUntilIdle()
+        assertEquals(0xFF112233.toInt(), store.state.value.iconColorArgb)
+
+        vm.onIconColorChanged(null)
+        advanceUntilIdle()
+        assertEquals(null, store.state.value.iconColorArgb)
+    }
+
+    @Test
     fun `onHairlineToggled writes through`() = runTest {
         val vm = viewModel()
         collect(vm)

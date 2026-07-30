@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -85,8 +86,12 @@ class SettingsActivity : ComponentActivity() {
         // Settings persist to DataStore on every change; repaint the widget as soon as the user
         // leaves this screen (Done, Back, or Home) so changes appear immediately instead of waiting
         // for the next minute tick. Runs on the application scope so it survives finish().
+        // updateAll() reaches into the AppWidget host and can throw (Remote/IO/IllegalState); a
+        // failed repaint just leaves the widget on the previous frame until the next tick, so log
+        // and swallow rather than crash a backgrounding activity. The footer copy is best-effort.
         (application as BinClockApp).applicationScope.launch {
-            BinClockWidget().updateAll(applicationContext)
+            runCatching { BinClockWidget().updateAll(applicationContext) }
+                .onFailure { Log.e(TAG, "Widget refresh on settings exit failed", it) }
         }
     }
 
@@ -109,4 +114,8 @@ class SettingsActivity : ComponentActivity() {
 
     private fun resultIntent(appWidgetId: Int): Intent =
         Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+
+    private companion object {
+        const val TAG = "SettingsActivity"
+    }
 }

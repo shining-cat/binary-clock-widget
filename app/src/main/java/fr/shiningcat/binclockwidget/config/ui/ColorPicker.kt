@@ -276,32 +276,3 @@ internal fun DrawScope.drawCheckerboard(
         }
     }
 }
-
-/** Format an ARGB [Int] as `#AARRGGBB` (or `#RRGGBB` when [showAlpha] is false). */
-internal fun formatHex(argb: Int, showAlpha: Boolean): String {
-    val a = AndroidColor.alpha(argb)
-    val r = AndroidColor.red(argb)
-    val g = AndroidColor.green(argb)
-    val b = AndroidColor.blue(argb)
-    return if (showAlpha) {
-        "#%02X%02X%02X%02X".format(a, r, g, b)
-    } else {
-        "#%02X%02X%02X".format(r, g, b)
-    }
-}
-
-/**
- * Parse a 6- or 8-digit hex string into an ARGB [Int], or return null for partial/invalid input.
- * A 6-digit value reuses [fallbackAlpha] for the alpha channel.
- */
-internal fun parseHexToArgb(input: String, fallbackAlpha: Int): Int? {
-    val clean = input.trim().removePrefix("#")
-    if (clean.length != 6 && clean.length != 8) return null
-    if (clean.any { it !in '0'..'9' && it !in 'a'..'f' && it !in 'A'..'F' }) return null
-    val v = clean.toLongOrNull(16) ?: return null
-    return when (clean.length) {
-        6 -> (((fallbackAlpha.toLong() and 0xFF) shl 24) or v).toInt()
-        8 -> v.toInt()
-        else -> null
-    }
-}
