@@ -1,0 +1,26 @@
+name: Android Verification
+run-name: Running Android Verifications
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '**.png'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ktlint-check:
+    name: Ktlint Check
+    uses: ./.github/workflows/reusable-ktlint-check.yml
+
+  spotless-check:
+    name: Spotless Check (License Headers)
+    uses: ./.github/workflows/reusable-spotless-check.yml
+
+  unit-tests:
+    name: Run Unit Tests
+    uses: ./.github/workflows/reusable-unit-tests.yml

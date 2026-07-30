@@ -2,6 +2,8 @@
  * SPDX-FileCopyrightText: 2026 shining-cat
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+import java.io.File
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -21,9 +23,31 @@ android {
         versionName = "0.1.0"
     }
 
+    // Release signing is driven entirely by environment variables so the keystore never lives in
+    // the repo. When they are absent (local builds, and F-Droid — which signs with its own key) the
+    // release build stays unsigned; CI injects them from repository secrets for GitHub releases.
+    val signingKeystorePath = System.getenv("SIGNING_KEYSTORE_PATH")
+    val signingKeystorePassword = System.getenv("SIGNING_KEYSTORE_PASSWORD")
+    val signingKeyAlias = System.getenv("SIGNING_KEY_ALIAS")
+    val signingKeyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+
+    if (signingKeystorePath != null && signingKeystorePassword != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = File(signingKeystorePath)
+                storePassword = signingKeystorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (signingKeystorePath != null && signingKeystorePassword != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
