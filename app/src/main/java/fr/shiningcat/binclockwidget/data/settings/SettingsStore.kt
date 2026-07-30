@@ -35,6 +35,8 @@ class DataStoreSettingsStore(
         return WidgetSettings(
             useMaterialYou = this[USE_MATERIAL_YOU] ?: d.useMaterialYou,
             colorArgb = this[COLOR_ARGB] ?: d.colorArgb,
+            iconColorArgb = this[ICON_COLOR_ARGB], // absent = inherit dots colour
+            backgroundColorArgb = this[BACKGROUND_COLOR_ARGB] ?: d.backgroundColorArgb,
             hairline = this[HAIRLINE] ?: d.hairline,
             tapActions = TapZone.entries.associateWith { zone ->
                 this[actionKey(zone)]?.let { runCatching { TapAction.valueOf(it) }.getOrNull() }
@@ -49,6 +51,8 @@ class DataStoreSettingsStore(
     private fun WidgetSettings.writeInto(prefs: MutablePreferences) {
         prefs[USE_MATERIAL_YOU] = useMaterialYou
         prefs[COLOR_ARGB] = colorArgb
+        if (iconColorArgb != null) prefs[ICON_COLOR_ARGB] = iconColorArgb else prefs.remove(ICON_COLOR_ARGB)
+        prefs[BACKGROUND_COLOR_ARGB] = backgroundColorArgb
         prefs[HAIRLINE] = hairline
         TapZone.entries.forEach { zone ->
             tapActions[zone]?.let { prefs[actionKey(zone)] = it.name }
@@ -60,6 +64,8 @@ class DataStoreSettingsStore(
     private companion object {
         val USE_MATERIAL_YOU = booleanPreferencesKey("use_material_you")
         val COLOR_ARGB = intPreferencesKey("color_argb")
+        val ICON_COLOR_ARGB = intPreferencesKey("icon_color_argb")
+        val BACKGROUND_COLOR_ARGB = intPreferencesKey("background_color_argb")
         val HAIRLINE = booleanPreferencesKey("hairline")
         fun actionKey(zone: TapZone) = stringPreferencesKey("tap_action_${zone.name}")
         fun packageKey(zone: TapZone) = stringPreferencesKey("tap_pkg_${zone.name}")

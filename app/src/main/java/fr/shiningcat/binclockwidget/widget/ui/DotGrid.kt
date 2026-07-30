@@ -95,27 +95,43 @@ fun DotGrid(state: WidgetRenderState) {
         // Material You's primary when enabled, otherwise the user's ARGB. Deriving dim/separator
         // from a fixed colorArgb here was the bug where off-rings stayed white under Material You.
         val context = LocalContext.current
+        val useMaterialYou =
+            state.settings.useMaterialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        // Dots follow Material You's primary (the vivid wallpaper accent) or the user's dots colour.
         val baseColor: Color =
-            if (state.settings.useMaterialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (useMaterialYou) {
                 GlanceTheme.colors.primary.getColor(context)
             } else {
                 Color(state.settings.colorArgb)
+            }
+        // Icons are deliberately a *different* tone from the dots for readability: under Material You
+        // that's the secondary companion tint; otherwise the user's icon colour, defaulting to the
+        // dots colour when unset (inherit).
+        val iconColor: Color =
+            if (useMaterialYou) {
+                GlanceTheme.colors.secondary.getColor(context)
+            } else {
+                state.settings.iconColorArgb?.let { Color(it) } ?: baseColor
             }
         val litColor: ColorProvider = ArgbColorProvider(baseColor)
         // Off-rings share the lit colour: the hollow-ring vs. filled-dot shape already signals
         // on/off, so a dimmer tint just read as "wrong colour" against the rest of the grid.
         val dimColor: ColorProvider = litColor
+        val glyphColor: ColorProvider = ArgbColorProvider(iconColor)
         // Separator is deliberately softer than the dots so the divider line doesn't compete.
         // A concrete Color (not a custom ColorProvider): Glance's background(ColorProvider) overload
         // doesn't paint a runtime-built provider, which is why the separator stayed invisible.
         val separatorColor: Color = baseColor.copy(alpha = 0.55f)
+        // User-chosen background; Material You never overrides it, so pure AMOLED black is preserved.
+        // The alpha channel is honoured, allowing a translucent widget over the launcher wallpaper.
+        val backgroundColor: Color = Color(state.settings.backgroundColorArgb)
 
         val size = LocalSize.current
         val cell = minOf(size.width / 6, size.height / 4)
         val dot = cell * 0.55f
 
         Box(
-            modifier = GlanceModifier.fillMaxSize().background(Color.Black),
+            modifier = GlanceModifier.fillMaxSize().background(backgroundColor),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -129,7 +145,7 @@ fun DotGrid(state: WidgetRenderState) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        row.cells.forEach { c -> CellImage(c, row.kind, state, litColor, dimColor, cell, dot) }
+                        row.cells.forEach { c -> CellImage(c, row.kind, state, litColor, dimColor, glyphColor, cell, dot) }
                     }
                     if (state.settings.hairline && index == 1) {
                         // A Box, not a Spacer: Glance Spacer backgrounds don't paint, which is why
@@ -158,6 +174,7 @@ private fun CellImage(
     state: WidgetRenderState,
     litColor: ColorProvider,
     dimColor: ColorProvider,
+    glyphColor: ColorProvider,
     cellSize: Dp,
     dotSize: Dp,
 ) {
@@ -179,7 +196,7 @@ private fun CellImage(
                 provider = ImageProvider(resolveGlyph(cell.slot, state)),
                 contentDescription = null,
                 modifier = imageModifier,
-                colorFilter = ColorFilter.tint(litColor),
+                colorFilter = ColorFilter.tint(glyphColor),
             )
         }
     }

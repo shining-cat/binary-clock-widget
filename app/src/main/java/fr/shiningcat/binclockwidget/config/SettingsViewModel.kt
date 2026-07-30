@@ -36,6 +36,11 @@ class SettingsViewModel(
 
     fun onColorChanged(argb: Int) = mutate { it.copy(colorArgb = argb) }
 
+    /** Null resets the icon colour to "inherit dots". */
+    fun onIconColorChanged(argb: Int?) = mutate { it.copy(iconColorArgb = argb) }
+
+    fun onBackgroundColorChanged(argb: Int) = mutate { it.copy(backgroundColorArgb = argb) }
+
     fun onMaterialYouToggled(enabled: Boolean) = mutate { it.copy(useMaterialYou = enabled) }
 
     fun onHairlineToggled(enabled: Boolean) = mutate { it.copy(hairline = enabled) }

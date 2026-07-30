@@ -2,24 +2,35 @@ package fr.shiningcat.binclockwidget.config.ui
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.shiningcat.binclockwidget.config.SettingsUiState
@@ -38,6 +52,9 @@ import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
 
 /** An installed, launchable app the user can bind a tap zone to. */
 data class InstalledApp(val packageName: String, val label: String)
+
+/** Which colour a bottom-sheet picker is editing. */
+private enum class ColorTarget { DOTS, ICONS, BACKGROUND }
 
 /**
  * Selectable actions per zone, per design §7. The zone default is always included so the
@@ -73,6 +90,8 @@ fun SettingsScreen(
     SettingsScreen(
         state = uiState,
         onColorChanged = viewModel::onColorChanged,
+        onIconColorChanged = viewModel::onIconColorChanged,
+        onBackgroundColorChanged = viewModel::onBackgroundColorChanged,
         onMaterialYouToggled = viewModel::onMaterialYouToggled,
         onHairlineToggled = viewModel::onHairlineToggled,
         onTapActionChanged = viewModel::onTapActionChanged,
@@ -86,6 +105,8 @@ fun SettingsScreen(
 private fun SettingsScreen(
     state: SettingsUiState,
     onColorChanged: (Int) -> Unit,
+    onIconColorChanged: (Int?) -> Unit,
+    onBackgroundColorChanged: (Int) -> Unit,
     onMaterialYouToggled: (Boolean) -> Unit,
     onHairlineToggled: (Boolean) -> Unit,
     onTapActionChanged: (TapZone, TapAction) -> Unit,
@@ -98,6 +119,8 @@ private fun SettingsScreen(
         is SettingsUiState.Ready -> ReadySettings(
             state = state,
             onColorChanged = onColorChanged,
+            onIconColorChanged = onIconColorChanged,
+            onBackgroundColorChanged = onBackgroundColorChanged,
             onMaterialYouToggled = onMaterialYouToggled,
             onHairlineToggled = onHairlineToggled,
             onTapActionChanged = onTapActionChanged,
@@ -112,6 +135,8 @@ private fun SettingsScreen(
 private fun ReadySettings(
     state: SettingsUiState.Ready,
     onColorChanged: (Int) -> Unit,
+    onIconColorChanged: (Int?) -> Unit,
+    onBackgroundColorChanged: (Int) -> Unit,
     onMaterialYouToggled: (Boolean) -> Unit,
     onHairlineToggled: (Boolean) -> Unit,
     onTapActionChanged: (TapZone, TapAction) -> Unit,
@@ -122,6 +147,7 @@ private fun ReadySettings(
     val settings = state.settings
     val pm = LocalContext.current.packageManager
     val apps = remember { loadLaunchableApps(pm) }
+    var activeColorTarget by remember { mutableStateOf<ColorTarget?>(null) }
 
     Column(
         modifier = Modifier
@@ -132,7 +158,7 @@ private fun ReadySettings(
     ) {
         Cheatsheet()
 
-        Section("Color") {
+        Section("Colour") {
             if (state.materialYouAvailable) {
                 ToggleRow(
                     label = "Use Material You",
@@ -141,17 +167,29 @@ private fun ReadySettings(
                 )
             }
             if (settings.useMaterialYou) {
+                // Dots + icons follow the wallpaper; the background stays a manual choice so pure
+                // AMOLED black is preserved even under Material You.
                 Text(
-                    text = "Colors follow your wallpaper.",
+                    text = "Dots and icons follow your wallpaper.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             } else {
-                LabeledColorPicker(
-                    label = "Dots",
-                    color = settings.colorArgb,
-                    onChanged = onColorChanged,
-                )
+                ColorRow("Dots", settings.colorArgb) { activeColorTarget = ColorTarget.DOTS }
+                ColorRow(
+                    label = "Icons",
+                    argb = settings.iconColorArgb ?: settings.colorArgb,
+                    subtitle = if (settings.iconColorArgb == null) "Same as dots" else null,
+                ) { activeColorTarget = ColorTarget.ICONS }
             }
+            ColorRow("Background", settings.backgroundColorArgb) {
+                activeColorTarget = ColorTarget.BACKGROUND
+            }
+            Text(
+                text = "Appearance changes show on the widget at the next clock update " +
+                    "(within a minute), or right away when you tap Done.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         Section("Hairline separator") {
@@ -196,6 +234,87 @@ private fun ReadySettings(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Done")
+        }
+    }
+
+    activeColorTarget?.let { target ->
+        ColorPickerSheet(
+            target = target,
+            settings = settings,
+            onColorChanged = onColorChanged,
+            onIconColorChanged = onIconColorChanged,
+            onBackgroundColorChanged = onBackgroundColorChanged,
+            onDismiss = { activeColorTarget = null },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ColorPickerSheet(
+    target: ColorTarget,
+    settings: WidgetSettings,
+    onColorChanged: (Int) -> Unit,
+    onIconColorChanged: (Int?) -> Unit,
+    onBackgroundColorChanged: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState()
+    // Seed once from the effective colour for this target; icons fall back to the dots colour.
+    val initialColor = when (target) {
+        ColorTarget.DOTS -> settings.colorArgb
+        ColorTarget.ICONS -> settings.iconColorArgb ?: settings.colorArgb
+        ColorTarget.BACKGROUND -> settings.backgroundColorArgb
+    }
+    // Live preview tracks the picker's emissions directly, so the header swatch updates as the user
+    // drags — independent of the widget, which only repaints on the next clock update.
+    var preview by remember { mutableStateOf(initialColor) }
+    val showAlpha = target == ColorTarget.BACKGROUND
+    val onPicked: (Int) -> Unit = when (target) {
+        ColorTarget.DOTS -> onColorChanged
+        ColorTarget.ICONS -> { argb -> onIconColorChanged(argb) }
+        ColorTarget.BACKGROUND -> onBackgroundColorChanged
+    }
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = when (target) {
+                        ColorTarget.DOTS -> "Dots colour"
+                        ColorTarget.ICONS -> "Icon colour"
+                        ColorTarget.BACKGROUND -> "Background colour"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                ColorSwatch(preview, size = 40.dp)
+            }
+            ColorPicker(
+                color = initialColor,
+                onColorChanged = {
+                    preview = it
+                    onPicked(it)
+                },
+                showAlpha = showAlpha,
+            )
+            if (target == ColorTarget.ICONS && settings.iconColorArgb != null) {
+                TextButton(onClick = {
+                    onIconColorChanged(null)
+                    onDismiss()
+                }) {
+                    Text("Reset to dots colour")
+                }
+            }
         }
     }
 }
@@ -269,14 +388,51 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
 }
 
 /**
- * A small text label above a [ColorPicker]. The Dots / Icon / Background controls all share this
- * shape, so adding the later ones (P4/P5) is a one-liner.
+ * A tappable row showing a colour's label (and an optional subtitle, e.g. "Same as dots") with a
+ * swatch of the current value. Tapping opens the shared [ColorPickerSheet]. Keeps the settings
+ * column compact — the picker itself lives in a bottom sheet.
  */
 @Composable
-private fun LabeledColorPicker(label: String, color: Int, onChanged: (Int) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
-        ColorPicker(color = color, onColorChanged = onChanged)
+private fun ColorRow(label: String, argb: Int, subtitle: String? = null, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = label, style = MaterialTheme.typography.bodyLarge)
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        ColorSwatch(argb)
+    }
+}
+
+/**
+ * A rounded colour swatch drawn over a checkerboard, so a translucent (low-alpha) colour reads as
+ * transparent rather than blending invisibly into the surface.
+ */
+@Composable
+private fun ColorSwatch(argb: Int, size: Dp = 28.dp) {
+    val shape = RoundedCornerShape(6.dp)
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape),
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCheckerboard()
+            drawRect(color = Color(argb))
+        }
     }
 }
 

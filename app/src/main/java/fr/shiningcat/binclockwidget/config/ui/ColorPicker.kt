@@ -2,27 +2,18 @@ package fr.shiningcat.binclockwidget.config.ui
 
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -37,6 +28,11 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
+// Compact sizing: the picker lives in a bottom sheet, so it stays small and hex-free. The live
+// preview is rendered by the caller (in the sheet header), keeping it clear of the slider stack.
+private val PANEL_HEIGHT = 120.dp
+private val SLIDER_HEIGHT = 20.dp
+
 /**
  * Dependency-free HSV colour picker with an optional alpha channel.
  *
@@ -45,12 +41,11 @@ import kotlin.math.roundToInt
  *
  * State (hue/saturation/value/alpha) is seeded ONCE from the initial [color] and thereafter owned
  * internally, so the picker's own emits — which flow back down as a new [color] — never reset the
- * in-flight interaction (drag, typing). The remember is deliberately NOT keyed on [color].
+ * in-flight interaction (drag). The remember is deliberately NOT keyed on [color].
  *
  * @param color initial ARGB colour (0xAARRGGBB).
  * @param onColorChanged invoked with the new ARGB colour on every user interaction.
- * @param showAlpha when true, shows the alpha slider and an 8-digit hex field; otherwise the colour
- *   is always opaque and the hex field is 6-digit.
+ * @param showAlpha when true, shows the alpha slider; otherwise the colour is always opaque.
  */
 @Composable
 fun ColorPicker(
@@ -66,9 +61,6 @@ fun ColorPicker(
     var value by remember { mutableFloatStateOf(seed[2]) }
     var alpha by remember { mutableFloatStateOf(if (showAlpha) AndroidColor.alpha(color) / 255f else 1f) }
 
-    val alphaInt = (alpha * 255f).roundToInt().coerceIn(0, 255)
-    val currentArgb = AndroidColor.HSVToColor(alphaInt, floatArrayOf(hue, sat, value))
-
     fun emit() {
         val a = (alpha * 255f).roundToInt().coerceIn(0, 255)
         onColorChanged(AndroidColor.HSVToColor(a, floatArrayOf(hue, sat, value)))
@@ -76,7 +68,7 @@ fun ColorPicker(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         SaturationValuePanel(
             hue = hue,
@@ -109,20 +101,6 @@ fun ColorPicker(
                 },
             )
         }
-
-        HexAndPreview(
-            currentArgb = currentArgb,
-            showAlpha = showAlpha,
-            onArgbParsed = { argb ->
-                val hsv = FloatArray(3)
-                AndroidColor.colorToHSV(argb, hsv)
-                hue = hsv[0]
-                sat = hsv[1]
-                value = hsv[2]
-                alpha = if (showAlpha) AndroidColor.alpha(argb) / 255f else 1f
-                emit()
-            },
-        )
     }
 }
 
@@ -147,7 +125,7 @@ private fun SaturationValuePanel(
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(160.dp)
+            .height(PANEL_HEIGHT)
             .onSizeChanged { panelSize = it }
             .pointerInput(Unit) {
                 detectTapGestures { handle(it) }
@@ -194,7 +172,7 @@ private fun HueSlider(hue: Float, onHueChange: (Float) -> Unit) {
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(24.dp)
+            .height(SLIDER_HEIGHT)
             .onSizeChanged { sliderSize = it }
             .pointerInput(Unit) {
                 detectTapGestures { handle(it) }
@@ -235,7 +213,7 @@ private fun AlphaSlider(
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(24.dp)
+            .height(SLIDER_HEIGHT)
             .onSizeChanged { sliderSize = it }
             .pointerInput(Unit) {
                 detectTapGestures { handle(it) }
@@ -261,60 +239,6 @@ private fun AlphaSlider(
     }
 }
 
-@Composable
-private fun HexAndPreview(
-    currentArgb: Int,
-    showAlpha: Boolean,
-    onArgbParsed: (Int) -> Unit,
-) {
-    var hexText by remember { mutableStateOf(formatHex(currentArgb, showAlpha)) }
-
-    // Reflect non-text edits (sliders/panel) back into the field, without clobbering in-progress
-    // typing: only overwrite when the field's current text doesn't already parse to this colour.
-    LaunchedEffect(currentArgb) {
-        val canonical = formatHex(currentArgb, showAlpha)
-        val parsed = parseHexToArgb(hexText, AndroidColor.alpha(currentArgb))
-        if (parsed != currentArgb) {
-            hexText = canonical
-        }
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        OutlinedTextField(
-            value = hexText,
-            onValueChange = { input ->
-                hexText = input
-                val parsed = parseHexToArgb(input, AndroidColor.alpha(currentArgb))
-                if (parsed != null) {
-                    onArgbParsed(parsed)
-                }
-            },
-            singleLine = true,
-            label = { Text("Hex") },
-            modifier = Modifier.weight(1f),
-        )
-        PreviewSwatch(argb = currentArgb)
-    }
-}
-
-@Composable
-private fun PreviewSwatch(argb: Int) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .padding(2.dp),
-    ) {
-        Canvas(modifier = Modifier.size(44.dp)) {
-            drawCheckerboard()
-            drawRect(color = Color(argb))
-        }
-    }
-}
-
 private fun DrawScope.drawThumb(center: Offset) {
     drawCircle(
         color = Color.White,
@@ -330,7 +254,7 @@ private fun DrawScope.drawThumb(center: Offset) {
     )
 }
 
-private fun DrawScope.drawCheckerboard(
+internal fun DrawScope.drawCheckerboard(
     cell: Float = 12f,
     light: Color = Color(0xFFFFFFFF),
     dark: Color = Color(0xFFCCCCCC),

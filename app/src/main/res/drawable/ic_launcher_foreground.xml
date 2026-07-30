@@ -1,0 +1,34 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!--
+      4x4 binary dot grid evoking the widget: a mix of filled dots (lit bits) and hollow rings
+      (off bits). Centred on (54.5,54.5); dot centres span 36dp (offset 18) with radius 4.5, so a
+      corner dot's OUTER edge sits ~30dp from centre — inside the adaptive-icon safe circle (Ø66,
+      radius 33) with margin, so the circular launcher mask no longer clips the corners.
+      Single path, evenOdd: disjoint filled circles render solid; ring subpairs carve their hole.
+      White so the themed/monochrome variant tints cleanly.
+    -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="
+            M44,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M68,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M32,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M56,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M44,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M56,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M32,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M68,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M32,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M33.6,36.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M56,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M57.6,36.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M44,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M45.6,48.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M68,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M69.6,48.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M32,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M33.6,60.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M68,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M69.6,60.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M44,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M45.6,72.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M56,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M57.6,72.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z" />
+</vector>
