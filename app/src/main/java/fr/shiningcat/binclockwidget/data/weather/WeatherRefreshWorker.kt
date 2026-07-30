@@ -4,18 +4,24 @@ import android.content.Context
 import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import fr.shiningcat.binclockwidget.data.location.LocationDataSource
 import fr.shiningcat.binclockwidget.widget.BinClockWidget
-import fr.shiningcat.binclockwidget.widget.WidgetGraph
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 class WeatherRefreshWorker(
     appContext: Context,
     params: WorkerParameters,
-) : CoroutineWorker(appContext, params) {
+) : CoroutineWorker(appContext, params), KoinComponent {
+    // Workers are instantiated by WorkManager, so dependencies are resolved via Koin.
+    private val location: LocationDataSource by inject()
+    private val weatherRepository: WeatherRepository by inject()
+
     override suspend fun doWork(): Result {
         // No permission / no fix means there is nothing to fetch; succeed so WorkManager keeps the schedule.
-        val location = WidgetGraph.location(applicationContext).lastKnown() ?: return Result.success()
+        val fix = location.lastKnown() ?: return Result.success()
         return runCatching {
-            WidgetGraph.weatherRepository(applicationContext).refresh(location.first, location.second)
+            weatherRepository.refresh(fix.first, fix.second)
             BinClockWidget().updateAll(applicationContext)
         }.fold(
             onSuccess = { Result.success() },

@@ -4,50 +4,30 @@ import android.Manifest
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.core.content.ContextCompat
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import fr.shiningcat.binclockwidget.config.ui.SettingsScreen
 import fr.shiningcat.binclockwidget.data.weather.WeatherRefreshWorker
 import fr.shiningcat.binclockwidget.widget.BinClockWidget
-import fr.shiningcat.binclockwidget.widget.WidgetGraph
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Widget configuration activity. Serves both the first-drop configuration flow (launched with an
  * [AppWidgetManager.EXTRA_APPWIDGET_ID]) and reconfiguration via the launcher (no widget id extra).
  */
 class SettingsActivity : ComponentActivity() {
-    private val viewModel: SettingsViewModel by viewModels {
-        viewModelFactory {
-            initializer {
-                SettingsViewModel(
-                    store = WidgetGraph.settingsStore(applicationContext),
-                    locationGranted = {
-                        ContextCompat.checkSelfPermission(
-                            this@SettingsActivity,
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                        ) == PackageManager.PERMISSION_GRANTED
-                    },
-                    materialYouAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                )
-            }
-        }
-    }
+    private val viewModel: SettingsViewModel by viewModel()
 
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->

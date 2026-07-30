@@ -6,12 +6,17 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import fr.shiningcat.binclockwidget.widget.ui.DotGrid
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class BinClockWidget : GlanceAppWidget() {
+class BinClockWidget : GlanceAppWidget(), KoinComponent {
     override val sizeMode: SizeMode = SizeMode.Exact
 
+    // Glance widgets are instantiated by the framework, so dependencies are resolved via Koin.
+    private val resolver: WidgetStateResolver by inject()
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val state = WidgetGraph.resolver(context).resolve()
+        val state = resolver.resolve()
         provideContent { DotGrid(state) }
     }
 
