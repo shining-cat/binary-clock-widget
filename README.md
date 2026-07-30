@@ -26,6 +26,26 @@ For example, a minutes row with the `32`, `8`, and `2` dots lit reads
 The cells not needed by the low-value ends of the shorter rows are reused to show
 the **alarm state** and a **weather** condition glyph.
 
+## Design notes
+
+### Alarm glyph mirrors the OS
+
+The alarm glyph lights whenever the platform reports a scheduled alarm
+(`AlarmManager.nextAlarmClock() != null`) — the same signal that drives the
+system status-bar alarm icon. We deliberately do **not** try to filter it.
+
+Automation and routine features (for example **Samsung Modes & Routines**)
+schedule via `setAlarmClock()` exactly like a real alarm, so they can light the
+glyph even when you didn't set a "real" alarm. It's tempting to filter these out
+by the scheduling app's package, but the public API only exposes the *soonest*
+alarm with no way to look past it — so any such filter risks the far worse
+failure of **hiding a genuine alarm** that happens to sit behind a routine one.
+Mirroring the OS is the honest best-effort a normal app can make.
+
+Note that an OEM status bar may appear to filter these internally; it has
+privileged access to the alarm database that third-party apps do not, so its
+behaviour can't be reliably reproduced through the public API.
+
 ## Tech stack
 
 - **Kotlin**
