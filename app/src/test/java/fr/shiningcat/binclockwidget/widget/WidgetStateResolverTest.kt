@@ -82,6 +82,23 @@ class WidgetStateResolverTest {
         }
 
     @Test
+    fun `resolve clamps over-100 percent to full fraction`() =
+        runTest {
+            val resolver =
+                WidgetStateResolver(
+                    now = { LocalDateTime.of(2026, 7, 28, 13, 47) },
+                    alarm = AlarmDataSource { false },
+                    weather = FakeWeatherRepo(null),
+                    settings = FakeSettingsStore(WidgetSettings()),
+                    battery = BatteryDataSource { BatteryStatus(percent = 150, isCharging = false) },
+                )
+
+            val s = resolver.resolve()
+
+            assertEquals(1.0f, s.battery?.fraction)
+        }
+
+    @Test
     fun `passes through null weather, unset alarm and unavailable battery`() =
         runTest {
             val resolver =

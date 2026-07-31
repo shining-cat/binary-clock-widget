@@ -150,8 +150,8 @@ internal fun batteryGlyphDrawable(glyph: BatteryGlyph): Int? =
 @Composable
 fun DotGrid(state: WidgetRenderState) {
     GlanceTheme {
-        // One base colour drives lit, dim, and separator so all three follow the same source —
-        // Material You's primary when enabled, otherwise the user's ARGB. Deriving dim/separator
+        // One base colour drives lit, dim, and gauge so all three follow the same source —
+        // Material You's primary when enabled, otherwise the user's ARGB. Deriving dim/gauge
         // from a fixed colorArgb here was the bug where off-rings stayed white under Material You.
         val context = LocalContext.current
         val useMaterialYou =
