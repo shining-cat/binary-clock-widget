@@ -148,7 +148,7 @@ internal fun batteryGlyphDrawable(glyph: BatteryGlyph): Int? =
 
 // Layout fractions, shared by the height budget and BatteryIndicatorRow so they stay in sync.
 private const val DOT_CELL_FRACTION = 0.55f // dot diameter as a fraction of its square cell
-private const val GAUGE_DOT_FRACTION = 0.3f // gauge thickness as a fraction of the dot
+private const val GAUGE_DOT_FRACTION = 0.2f // gauge thickness as a fraction of the dot
 private const val GLYPH_DOT_FRACTION = 0.8f // battery glyph size as a fraction of the dot
 
 // Battery band height as a fraction of a cell: the thin gauge plus the same (1 - dot) of air a dot
