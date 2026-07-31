@@ -244,8 +244,14 @@ private fun BatteryIndicatorRow(
     val gaugeHeight = dot * 0.3f
     val gaugeRadius = gaugeHeight / 2
     val glyphSize = dot * 0.8f
+    // Match the inter-row rhythm so every horizontal component is equally spaced. Two consecutive
+    // dot rows leave (cell - dot) of air between them (each dot is inset (cell - dot)/2 in its cell).
+    // Pin the battery row's height to gaugeHeight + (cell - dot) so its content carries that same
+    // (cell - dot)/2 of air top and bottom — otherwise the tall glyph slot sets the height and the
+    // thin gauge floats in a band that reads as a wider gap than the dot rows have.
+    val rowHeight = gaugeHeight + (cell - dot)
     Row(
-        modifier = GlanceModifier.width(cell * 6),
+        modifier = GlanceModifier.width(cell * 6).height(rowHeight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Spacer(modifier = GlanceModifier.width(edgeInset))
@@ -269,9 +275,10 @@ private fun BatteryIndicatorRow(
                 content = {},
             )
         }
-        // Glyph slot: the 6th column (cell wide), icon centred under the 6th dot.
+        // Glyph slot: the 6th column (cell wide), icon centred under the 6th dot. Height tracks the
+        // pinned row so the glyph never stretches the row past the dot rhythm.
         Box(
-            modifier = GlanceModifier.width(cell).height(dot),
+            modifier = GlanceModifier.width(cell).height(rowHeight),
             contentAlignment = Alignment.Center,
         ) {
             batteryGlyphDrawable(glyph)?.let { res ->
