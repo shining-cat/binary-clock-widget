@@ -13,7 +13,6 @@ import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -24,11 +23,13 @@ import androidx.glance.LocalSize
 import androidx.glance.action.Action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionStartActivity
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.size
@@ -47,8 +48,6 @@ import fr.shiningcat.binclockwidget.domain.model.WeatherCondition
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
 import fr.shiningcat.binclockwidget.widget.model.BatteryIndicator
 import fr.shiningcat.binclockwidget.widget.model.WidgetRenderState
-
-private val gaugeHeight = 4.dp
 
 /**
  * Glance 1.1.x marks every runtime-Color ColorProvider factory @RestrictTo; the public
@@ -234,30 +233,40 @@ private fun BatteryIndicatorRow(
 ) {
     val fraction = indicator?.fraction ?: 0f
     val glyph = indicator?.glyph ?: BatteryGlyph.NONE
+    // Dots sit (cell - dot)/2 inside their square cells, so a bar filling the row from its edge
+    // juts out past the leftmost dot toward the widget border. Inset the gauge by that same amount
+    // so its left edge lines up with the dots; the glyph then fills the 6th column, centred under
+    // the 6th dot. Height scales with the icon so the bar stays proportionate at any widget size.
+    val edgeInset = (cell - dot) / 2
+    val trackWidth = cell * 5 - edgeInset
+    val gaugeHeight = dot * 0.6f
+    val gaugeRadius = gaugeHeight / 2
     Row(
         modifier = GlanceModifier.width(cell * 6),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // Gauge: cell*5 track (matches the old separator width), fill inset from the left.
+        Spacer(modifier = GlanceModifier.width(edgeInset))
+        // Pill-shaped gauge: a rounded track groove with a rounded fill growing left→right.
         Box(
             modifier =
                 GlanceModifier
-                    .width(cell * 5)
+                    .width(trackWidth)
                     .height(gaugeHeight)
-                    .background(trackColor),
+                    .background(trackColor)
+                    .cornerRadius(gaugeRadius),
             contentAlignment = Alignment.CenterStart,
         ) {
             Box(
                 modifier =
                     GlanceModifier
-                        .width(cell * 5 * fraction)
+                        .width(trackWidth * fraction)
                         .height(gaugeHeight)
-                        .background(fillColor),
+                        .background(fillColor)
+                        .cornerRadius(gaugeRadius),
                 content = {},
             )
         }
-        // Glyph slot: reserved cell-wide column (aligned under the 6th dot), dot-sized icon inside.
+        // Glyph slot: the 6th column (cell wide), dot-sized icon centred under the 6th dot.
         Box(
             modifier = GlanceModifier.width(cell).height(dot),
             contentAlignment = Alignment.Center,
