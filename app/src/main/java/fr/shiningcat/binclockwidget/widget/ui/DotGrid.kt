@@ -32,6 +32,7 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
+import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.unit.ColorProvider
@@ -150,6 +151,7 @@ internal fun batteryGlyphDrawable(glyph: BatteryGlyph): Int? =
 private const val DOT_CELL_FRACTION = 0.55f // dot diameter as a fraction of its square cell
 private const val GAUGE_DOT_FRACTION = 0.2f // gauge thickness as a fraction of the dot
 private const val GLYPH_DOT_FRACTION = 0.8f // battery glyph size as a fraction of the dot
+private const val GAUGE_STROKE_FRACTION = 0.35f // empty-track outline thickness as a fraction of the gauge height
 
 // Battery band height as a fraction of a cell: the thin gauge plus the same (1 - dot) of air a dot
 // row leaves around its dot, so the band's neighbours sit on the exact dot-row rhythm.
@@ -186,11 +188,11 @@ fun DotGrid(state: WidgetRenderState) {
         // on/off, so a dimmer tint just read as "wrong colour" against the rest of the grid.
         val dimColor: ColorProvider = litColor
         val glyphColor: ColorProvider = ArgbColorProvider(iconColor)
-        // Gauge colours are concrete Color, not a runtime ColorProvider: Glance's
-        // background(ColorProvider) overload doesn't paint a runtime-built provider (the gotcha the
-        // old separator hit). Fill = dot tone; track = same tone at low alpha so it reads as a groove.
-        val gaugeFillColor: Color = baseColor
-        val gaugeTrackColor: Color = baseColor.copy(alpha = 0.16f)
+        // Gauge shares the icon tone (not the dot tone): it's secondary info that groups visually
+        // with the battery glyph beside it, so they read as one unit distinct from the clock dots.
+        // Concrete Color, not a runtime ColorProvider — Glance's background(ColorProvider) overload
+        // doesn't paint a runtime-built provider (the gotcha the old separator hit).
+        val gaugeColor: Color = iconColor
         // User-chosen background; Material You never overrides it, so pure AMOLED black is preserved.
         // The alpha channel is honoured, allowing a translucent widget over the launcher wallpaper.
         val backgroundColor: Color = Color(state.settings.backgroundColorArgb)
@@ -222,8 +224,8 @@ fun DotGrid(state: WidgetRenderState) {
                     if (index == 1) {
                         BatteryIndicatorRow(
                             indicator = state.battery,
-                            fillColor = gaugeFillColor,
-                            trackColor = gaugeTrackColor,
+                            gaugeColor = gaugeColor,
+                            backgroundColor = backgroundColor,
                             glyphColor = glyphColor,
                             cell = cell,
                             dot = dot,
@@ -238,8 +240,8 @@ fun DotGrid(state: WidgetRenderState) {
 @Composable
 private fun BatteryIndicatorRow(
     indicator: BatteryIndicator?,
-    fillColor: Color,
-    trackColor: Color,
+    gaugeColor: Color,
+    backgroundColor: Color,
     glyphColor: ColorProvider,
     cell: Dp,
     dot: Dp,
@@ -256,6 +258,8 @@ private fun BatteryIndicatorRow(
     val trackWidth = cell * 5 - edgeInset
     val gaugeHeight = dot * GAUGE_DOT_FRACTION
     val gaugeRadius = gaugeHeight / 2
+    val strokeWidth = gaugeHeight * GAUGE_STROKE_FRACTION
+    val innerRadius = gaugeRadius - strokeWidth
     val glyphSize = dot * GLYPH_DOT_FRACTION
     // Match the inter-row rhythm so every horizontal component is equally spaced. Two consecutive
     // dot rows leave (cell - dot) of air between them (each dot is inset (cell - dot)/2 in its cell).
@@ -268,22 +272,40 @@ private fun BatteryIndicatorRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Spacer(modifier = GlanceModifier.width(edgeInset))
-        // Pill-shaped gauge: a rounded track groove with a rounded fill growing left→right.
+        // Pill gauge in the icon tone, echoing the grid's ring-vs-filled-dot language: the empty
+        // portion is an outline, the charged portion a solid fill growing left→right. Glance has no
+        // border modifier, so the outline is faked by nesting a background-tone pill inside a
+        // gauge-tone pill — the exposed rim reads as the stroke. The solid fill then layers on top,
+        // covering the outline wherever the battery is charged. (A translucent background tone would
+        // double-composite over the widget background in the hollow; the default AMOLED black is
+        // opaque, so this is invisible in practice.)
         Box(
-            modifier =
-                GlanceModifier
-                    .width(trackWidth)
-                    .height(gaugeHeight)
-                    .background(trackColor)
-                    .cornerRadius(gaugeRadius),
+            modifier = GlanceModifier.width(trackWidth).height(gaugeHeight),
             contentAlignment = Alignment.CenterStart,
         ) {
             Box(
                 modifier =
                     GlanceModifier
+                        .fillMaxSize()
+                        .background(gaugeColor)
+                        .cornerRadius(gaugeRadius)
+                        .padding(strokeWidth),
+            ) {
+                Box(
+                    modifier =
+                        GlanceModifier
+                            .fillMaxSize()
+                            .background(backgroundColor)
+                            .cornerRadius(innerRadius),
+                    content = {},
+                )
+            }
+            Box(
+                modifier =
+                    GlanceModifier
                         .width(trackWidth * fraction)
                         .height(gaugeHeight)
-                        .background(fillColor)
+                        .background(gaugeColor)
                         .cornerRadius(gaugeRadius),
                 content = {},
             )
