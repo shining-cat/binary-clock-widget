@@ -235,12 +235,15 @@ private fun BatteryIndicatorRow(
     val glyph = indicator?.glyph ?: BatteryGlyph.NONE
     // Dots sit (cell - dot)/2 inside their square cells, so a bar filling the row from its edge
     // juts out past the leftmost dot toward the widget border. Inset the gauge by that same amount
-    // so its left edge lines up with the dots; the glyph then fills the 6th column, centred under
-    // the 6th dot. Height scales with the icon so the bar stays proportionate at any widget size.
+    // so its left edge lines up with the dots; the glyph fills the 6th column, centred under the
+    // 6th dot. Sizes are fractions of the dot so everything scales with the widget: the gauge is a
+    // slim bar, the battery glyph a touch smaller than the grid icons (it's secondary information).
+    // cornerRadius only rounds on API 31+; older versions fall back to square corners by design.
     val edgeInset = (cell - dot) / 2
     val trackWidth = cell * 5 - edgeInset
-    val gaugeHeight = dot * 0.6f
+    val gaugeHeight = dot * 0.4f
     val gaugeRadius = gaugeHeight / 2
+    val glyphSize = dot * 0.8f
     Row(
         modifier = GlanceModifier.width(cell * 6),
         verticalAlignment = Alignment.CenterVertically,
@@ -266,7 +269,7 @@ private fun BatteryIndicatorRow(
                 content = {},
             )
         }
-        // Glyph slot: the 6th column (cell wide), dot-sized icon centred under the 6th dot.
+        // Glyph slot: the 6th column (cell wide), icon centred under the 6th dot.
         Box(
             modifier = GlanceModifier.width(cell).height(dot),
             contentAlignment = Alignment.Center,
@@ -275,7 +278,7 @@ private fun BatteryIndicatorRow(
                 Image(
                     provider = ImageProvider(res),
                     contentDescription = null,
-                    modifier = GlanceModifier.size(dot),
+                    modifier = GlanceModifier.size(glyphSize),
                     colorFilter = ColorFilter.tint(glyphColor),
                 )
             }
