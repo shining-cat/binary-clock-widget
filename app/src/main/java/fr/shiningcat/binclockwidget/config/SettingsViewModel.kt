@@ -48,8 +48,6 @@ class SettingsViewModel(
 
     fun onMaterialYouToggled(enabled: Boolean) = mutate { it.copy(useMaterialYou = enabled) }
 
-    fun onHairlineToggled(enabled: Boolean) = mutate { it.copy(hairline = enabled) }
-
     fun onTapActionChanged(
         zone: TapZone,
         action: TapAction,

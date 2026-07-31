@@ -17,7 +17,6 @@ data class WidgetSettings(
     // Widget background. Default opaque AMOLED black; alpha channel allows a translucent background.
     // Material You never overrides this, so pure black is preserved when Material You is on.
     val backgroundColorArgb: Int = 0xFF000000.toInt(),
-    val hairline: Boolean = false,
     val tapActions: Map<TapZone, TapAction> =
         mapOf(
             TapZone.ALARM to TapAction.OPEN_ALARMS,

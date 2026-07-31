@@ -99,7 +99,6 @@ fun SettingsScreen(
         onIconColorChanged = viewModel::onIconColorChanged,
         onBackgroundColorChanged = viewModel::onBackgroundColorChanged,
         onMaterialYouToggled = viewModel::onMaterialYouToggled,
-        onHairlineToggled = viewModel::onHairlineToggled,
         onTapActionChanged = viewModel::onTapActionChanged,
         onTapAppPackageChanged = viewModel::onTapAppPackageChanged,
         onRequestLocation = onRequestLocation,
@@ -114,7 +113,6 @@ private fun SettingsScreen(
     onIconColorChanged: (Int?) -> Unit,
     onBackgroundColorChanged: (Int) -> Unit,
     onMaterialYouToggled: (Boolean) -> Unit,
-    onHairlineToggled: (Boolean) -> Unit,
     onTapActionChanged: (TapZone, TapAction) -> Unit,
     onTapAppPackageChanged: (TapZone, String?) -> Unit,
     onRequestLocation: () -> Unit,
@@ -131,7 +129,6 @@ private fun SettingsScreen(
                 onIconColorChanged = onIconColorChanged,
                 onBackgroundColorChanged = onBackgroundColorChanged,
                 onMaterialYouToggled = onMaterialYouToggled,
-                onHairlineToggled = onHairlineToggled,
                 onTapActionChanged = onTapActionChanged,
                 onTapAppPackageChanged = onTapAppPackageChanged,
                 onRequestLocation = onRequestLocation,
@@ -148,7 +145,6 @@ private fun ReadySettings(
     onIconColorChanged: (Int?) -> Unit,
     onBackgroundColorChanged: (Int) -> Unit,
     onMaterialYouToggled: (Boolean) -> Unit,
-    onHairlineToggled: (Boolean) -> Unit,
     onTapActionChanged: (TapZone, TapAction) -> Unit,
     onTapAppPackageChanged: (TapZone, String?) -> Unit,
     onRequestLocation: () -> Unit,
@@ -197,14 +193,6 @@ private fun ReadySettings(
                 ColorRow("Background", settings.backgroundColorArgb) {
                     activeColorTarget = ColorTarget.BACKGROUND
                 }
-            }
-
-            Section("Hairline separator") {
-                ToggleRow(
-                    label = "Show separator",
-                    checked = settings.hairline,
-                    onCheckedChange = onHairlineToggled,
-                )
             }
 
             Section("Tap actions") {
