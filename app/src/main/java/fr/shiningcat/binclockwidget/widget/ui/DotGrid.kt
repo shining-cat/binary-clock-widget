@@ -241,7 +241,7 @@ private fun BatteryIndicatorRow(
     // cornerRadius only rounds on API 31+; older versions fall back to square corners by design.
     val edgeInset = (cell - dot) / 2
     val trackWidth = cell * 5 - edgeInset
-    val gaugeHeight = dot * 0.4f
+    val gaugeHeight = dot * 0.3f
     val gaugeRadius = gaugeHeight / 2
     val glyphSize = dot * 0.8f
     Row(
