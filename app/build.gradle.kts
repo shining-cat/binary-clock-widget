@@ -68,6 +68,12 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        // We ship no native code of our own; the only .so is the prebuilt one bundled with
+        // DataStore. Keep it unstripped so the release APK is byte-for-byte reproducible — the
+        // NDK strip step is non-deterministic across build environments (needed for F-Droid).
+        jniLibs {
+            keepDebugSymbols += "**/*.so"
+        }
     }
 }
 
