@@ -23,6 +23,13 @@ android {
         versionName = "0.1.0"
     }
 
+    // Strip AGP's "Dependency metadata" blob from the APK signing block. F-Droid's scanner rejects
+    // it as an opaque proprietary block; it also isn't reproducible. We don't need it.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     // Release signing is driven entirely by environment variables so the keystore never lives in
     // the repo. When they are absent (local builds, and F-Droid — which signs with its own key) the
     // release build stays unsigned; CI injects them from repository secrets for GitHub releases.
