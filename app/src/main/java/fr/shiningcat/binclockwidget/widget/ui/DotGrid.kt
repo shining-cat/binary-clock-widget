@@ -36,6 +36,7 @@ import androidx.glance.layout.width
 import androidx.glance.unit.ColorProvider
 import fr.shiningcat.binclockwidget.R
 import fr.shiningcat.binclockwidget.domain.WeatherGlyphMapper
+import fr.shiningcat.binclockwidget.domain.model.BatteryGlyph
 import fr.shiningcat.binclockwidget.domain.model.Cell
 import fr.shiningcat.binclockwidget.domain.model.DayNight
 import fr.shiningcat.binclockwidget.domain.model.GlyphSlot
@@ -44,9 +45,10 @@ import fr.shiningcat.binclockwidget.domain.model.TapAction
 import fr.shiningcat.binclockwidget.domain.model.TapZone
 import fr.shiningcat.binclockwidget.domain.model.WeatherCondition
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
+import fr.shiningcat.binclockwidget.widget.model.BatteryIndicator
 import fr.shiningcat.binclockwidget.widget.model.WidgetRenderState
 
-private val hairlineHeight = 2.dp
+private val gaugeHeight = 4.dp
 
 /**
  * Glance 1.1.x marks every runtime-Color ColorProvider factory @RestrictTo; the public
@@ -136,6 +138,15 @@ internal fun resolveGlyph(
     }
 }
 
+@DrawableRes
+internal fun batteryGlyphDrawable(glyph: BatteryGlyph): Int? =
+    when (glyph) {
+        BatteryGlyph.NONE -> null
+        BatteryGlyph.LOW -> R.drawable.ic_warning
+        BatteryGlyph.VERY_LOW -> R.drawable.ic_warning_filled
+        BatteryGlyph.CHARGING -> R.drawable.ic_bolt
+    }
+
 @Composable
 fun DotGrid(state: WidgetRenderState) {
     GlanceTheme {
@@ -166,10 +177,11 @@ fun DotGrid(state: WidgetRenderState) {
         // on/off, so a dimmer tint just read as "wrong colour" against the rest of the grid.
         val dimColor: ColorProvider = litColor
         val glyphColor: ColorProvider = ArgbColorProvider(iconColor)
-        // Separator is deliberately softer than the dots so the divider line doesn't compete.
-        // A concrete Color (not a custom ColorProvider): Glance's background(ColorProvider) overload
-        // doesn't paint a runtime-built provider, which is why the separator stayed invisible.
-        val separatorColor: Color = baseColor.copy(alpha = 0.55f)
+        // Gauge colours are concrete Color, not a runtime ColorProvider: Glance's
+        // background(ColorProvider) overload doesn't paint a runtime-built provider (the gotcha the
+        // old separator hit). Fill = dot tone; track = same tone at low alpha so it reads as a groove.
+        val gaugeFillColor: Color = baseColor
+        val gaugeTrackColor: Color = baseColor.copy(alpha = 0.16f)
         // User-chosen background; Material You never overrides it, so pure AMOLED black is preserved.
         // The alpha channel is honoured, allowing a translucent widget over the launcher wallpaper.
         val backgroundColor: Color = Color(state.settings.backgroundColorArgb)
@@ -195,22 +207,68 @@ fun DotGrid(state: WidgetRenderState) {
                     ) {
                         row.cells.forEach { c -> CellImage(c, row.kind, state, litColor, dimColor, glyphColor, cell, dot) }
                     }
-                    if (state.settings.hairline && index == 1) {
-                        // A Box, not a Spacer: Glance Spacer backgrounds don't paint, which is why
-                        // the separator was invisible however it was toggled.
-                        // Width cell*5 (not cell*6): inset half a cell each side so the line aligns
-                        // with the dot columns instead of running to the widget edges. The Column
-                        // centres it horizontally.
-                        Box(
-                            modifier =
-                                GlanceModifier
-                                    .height(hairlineHeight)
-                                    .width(cell * 5)
-                                    .background(separatorColor),
-                            content = {},
+                    if (index == 1) {
+                        BatteryIndicatorRow(
+                            indicator = state.battery,
+                            fillColor = gaugeFillColor,
+                            trackColor = gaugeTrackColor,
+                            glyphColor = glyphColor,
+                            cell = cell,
+                            dot = dot,
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BatteryIndicatorRow(
+    indicator: BatteryIndicator?,
+    fillColor: Color,
+    trackColor: Color,
+    glyphColor: ColorProvider,
+    cell: Dp,
+    dot: Dp,
+) {
+    val fraction = indicator?.fraction ?: 0f
+    val glyph = indicator?.glyph ?: BatteryGlyph.NONE
+    Row(
+        modifier = GlanceModifier.width(cell * 6),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Gauge: cell*5 track (matches the old separator width), fill inset from the left.
+        Box(
+            modifier =
+                GlanceModifier
+                    .width(cell * 5)
+                    .height(gaugeHeight)
+                    .background(trackColor),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Box(
+                modifier =
+                    GlanceModifier
+                        .width(cell * 5 * fraction)
+                        .height(gaugeHeight)
+                        .background(fillColor),
+                content = {},
+            )
+        }
+        // Glyph slot: reserved cell-wide column (aligned under the 6th dot), dot-sized icon inside.
+        Box(
+            modifier = GlanceModifier.width(cell).height(dot),
+            contentAlignment = Alignment.Center,
+        ) {
+            batteryGlyphDrawable(glyph)?.let { res ->
+                Image(
+                    provider = ImageProvider(res),
+                    contentDescription = null,
+                    modifier = GlanceModifier.size(dot),
+                    colorFilter = ColorFilter.tint(glyphColor),
+                )
             }
         }
     }
