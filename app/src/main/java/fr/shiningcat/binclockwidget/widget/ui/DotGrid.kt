@@ -146,6 +146,16 @@ internal fun batteryGlyphDrawable(glyph: BatteryGlyph): Int? =
         BatteryGlyph.CHARGING -> R.drawable.ic_bolt
     }
 
+// Layout fractions, shared by the height budget and BatteryIndicatorRow so they stay in sync.
+private const val DOT_CELL_FRACTION = 0.55f // dot diameter as a fraction of its square cell
+private const val GAUGE_DOT_FRACTION = 0.3f // gauge thickness as a fraction of the dot
+private const val GLYPH_DOT_FRACTION = 0.8f // battery glyph size as a fraction of the dot
+
+// Battery band height as a fraction of a cell: the thin gauge plus the same (1 - dot) of air a dot
+// row leaves around its dot, so the band's neighbours sit on the exact dot-row rhythm.
+private const val BATTERY_ROW_CELL_FRACTION =
+    GAUGE_DOT_FRACTION * DOT_CELL_FRACTION + (1f - DOT_CELL_FRACTION)
+
 @Composable
 fun DotGrid(state: WidgetRenderState) {
     GlanceTheme {
@@ -186,8 +196,11 @@ fun DotGrid(state: WidgetRenderState) {
         val backgroundColor: Color = Color(state.settings.backgroundColorArgb)
 
         val size = LocalSize.current
-        val cell = minOf(size.width / 6, size.height / 4)
-        val dot = cell * 0.55f
+        // Height is shared by five stacked components — four dot rows plus the battery band between
+        // minutes and day. Reserve the band's fraction so it doesn't overflow and make the launcher
+        // squeeze the bottom (date) rows; the old 2.dp hairline was negligible, this band isn't.
+        val cell = minOf(size.width / 6, size.height / (4 + BATTERY_ROW_CELL_FRACTION))
+        val dot = cell * DOT_CELL_FRACTION
 
         Box(
             modifier = GlanceModifier.fillMaxSize().background(backgroundColor),
@@ -241,9 +254,9 @@ private fun BatteryIndicatorRow(
     // cornerRadius only rounds on API 31+; older versions fall back to square corners by design.
     val edgeInset = (cell - dot) / 2
     val trackWidth = cell * 5 - edgeInset
-    val gaugeHeight = dot * 0.3f
+    val gaugeHeight = dot * GAUGE_DOT_FRACTION
     val gaugeRadius = gaugeHeight / 2
-    val glyphSize = dot * 0.8f
+    val glyphSize = dot * GLYPH_DOT_FRACTION
     // Match the inter-row rhythm so every horizontal component is equally spaced. Two consecutive
     // dot rows leave (cell - dot) of air between them (each dot is inset (cell - dot)/2 in its cell).
     // Pin the battery row's height to gaugeHeight + (cell - dot) so its content carries that same
