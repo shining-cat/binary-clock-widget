@@ -13,6 +13,8 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import fr.shiningcat.binclockwidget.config.SettingsViewModel
 import fr.shiningcat.binclockwidget.data.alarm.AlarmDataSource
 import fr.shiningcat.binclockwidget.data.alarm.AndroidAlarmDataSource
+import fr.shiningcat.binclockwidget.data.battery.AndroidBatteryDataSource
+import fr.shiningcat.binclockwidget.data.battery.BatteryDataSource
 import fr.shiningcat.binclockwidget.data.location.AndroidLocationDataSource
 import fr.shiningcat.binclockwidget.data.location.LocationDataSource
 import fr.shiningcat.binclockwidget.data.settings.DataStoreSettingsStore
@@ -71,6 +73,7 @@ val appModule =
 
         single<LocationDataSource> { AndroidLocationDataSource(androidContext()) }
         single<AlarmDataSource> { AndroidAlarmDataSource(androidContext()) }
+        single<BatteryDataSource> { AndroidBatteryDataSource(androidContext()) }
 
         single {
             WidgetStateResolver(
@@ -78,6 +81,7 @@ val appModule =
                 alarm = get(),
                 weather = get(),
                 settings = get(),
+                battery = get(),
             )
         }
 

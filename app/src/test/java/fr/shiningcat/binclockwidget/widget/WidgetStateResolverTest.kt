@@ -5,8 +5,11 @@
 package fr.shiningcat.binclockwidget.widget
 
 import fr.shiningcat.binclockwidget.data.alarm.AlarmDataSource
+import fr.shiningcat.binclockwidget.data.battery.BatteryDataSource
 import fr.shiningcat.binclockwidget.data.settings.SettingsStore
 import fr.shiningcat.binclockwidget.data.weather.WeatherRepository
+import fr.shiningcat.binclockwidget.domain.model.BatteryGlyph
+import fr.shiningcat.binclockwidget.domain.model.BatteryStatus
 import fr.shiningcat.binclockwidget.domain.model.WeatherSnapshot
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +43,7 @@ private class FakeSettingsStore(
 
 class WidgetStateResolverTest {
     @Test
-    fun `resolves face for injected time and passes through alarm+weather+settings`() =
+    fun `resolves face, passes through alarm+weather+settings, maps battery`() =
         runTest {
             val resolver =
                 WidgetStateResolver(
@@ -48,6 +51,7 @@ class WidgetStateResolverTest {
                     alarm = AlarmDataSource { true },
                     weather = FakeWeatherRepo(WeatherSnapshot(0, true, 1, 3, 1L)),
                     settings = FakeSettingsStore(WidgetSettings()),
+                    battery = BatteryDataSource { BatteryStatus(percent = 50, isCharging = false) },
                 )
 
             val s = resolver.resolve()
@@ -56,10 +60,12 @@ class WidgetStateResolverTest {
             assertTrue(s.alarmSet)
             assertEquals(0, s.weather?.nowCode)
             assertEquals(WidgetSettings(), s.settings)
+            assertEquals(0.5f, s.battery?.fraction)
+            assertEquals(BatteryGlyph.NONE, s.battery?.glyph)
         }
 
     @Test
-    fun `passes through null weather and unset alarm`() =
+    fun `charging battery maps to the charging glyph`() =
         runTest {
             val resolver =
                 WidgetStateResolver(
@@ -67,12 +73,31 @@ class WidgetStateResolverTest {
                     alarm = AlarmDataSource { false },
                     weather = FakeWeatherRepo(null),
                     settings = FakeSettingsStore(WidgetSettings()),
+                    battery = BatteryDataSource { BatteryStatus(percent = 5, isCharging = true) },
+                )
+
+            val s = resolver.resolve()
+
+            assertEquals(BatteryGlyph.CHARGING, s.battery?.glyph)
+        }
+
+    @Test
+    fun `passes through null weather, unset alarm and unavailable battery`() =
+        runTest {
+            val resolver =
+                WidgetStateResolver(
+                    now = { LocalDateTime.of(2026, 7, 28, 13, 47) },
+                    alarm = AlarmDataSource { false },
+                    weather = FakeWeatherRepo(null),
+                    settings = FakeSettingsStore(WidgetSettings()),
+                    battery = BatteryDataSource { null },
                 )
 
             val s = resolver.resolve()
 
             assertFalse(s.alarmSet)
             assertNull(s.weather)
+            assertNull(s.battery)
             assertEquals(4, s.face.rows.size)
         }
 }
