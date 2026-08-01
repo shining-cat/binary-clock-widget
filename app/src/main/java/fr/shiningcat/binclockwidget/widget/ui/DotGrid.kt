@@ -28,11 +28,11 @@ import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
-import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.unit.ColorProvider
@@ -149,14 +149,14 @@ internal fun batteryGlyphDrawable(glyph: BatteryGlyph): Int? =
 
 // Layout fractions, shared by the height budget and BatteryIndicatorRow so they stay in sync.
 private const val DOT_CELL_FRACTION = 0.55f // dot diameter as a fraction of its square cell
-private const val GAUGE_DOT_FRACTION = 0.2f // gauge thickness as a fraction of the dot
 private const val GLYPH_DOT_FRACTION = 0.8f // battery glyph size as a fraction of the dot
-private const val GAUGE_STROKE_FRACTION = 0.35f // empty-track outline thickness as a fraction of the gauge height
 
-// Battery band height as a fraction of a cell: the thin gauge plus the same (1 - dot) of air a dot
-// row leaves around its dot, so the band's neighbours sit on the exact dot-row rhythm.
-private const val BATTERY_ROW_CELL_FRACTION =
-    GAUGE_DOT_FRACTION * DOT_CELL_FRACTION + (1f - DOT_CELL_FRACTION)
+// The battery band is one full cell — the same footprint as a dot row — so the gauge, centred in
+// it, floats with the same air a visible dot has in its cell, and the widget reads as five even
+// rows. This holds regardless of the gauge height (see gaugeHeight == dot/2 in BatteryIndicatorRow).
+// The empty-track outline weight is baked into ic_gauge_track to match the off-dot ring; see that
+// drawable for the rim and aspect-ratio derivation.
+private const val BATTERY_ROW_CELL_FRACTION = 1f
 
 @Composable
 fun DotGrid(state: WidgetRenderState) {
@@ -225,7 +225,6 @@ fun DotGrid(state: WidgetRenderState) {
                         BatteryIndicatorRow(
                             indicator = state.battery,
                             gaugeColor = gaugeColor,
-                            backgroundColor = backgroundColor,
                             glyphColor = glyphColor,
                             cell = cell,
                             dot = dot,
@@ -241,7 +240,6 @@ fun DotGrid(state: WidgetRenderState) {
 private fun BatteryIndicatorRow(
     indicator: BatteryIndicator?,
     gaugeColor: Color,
-    backgroundColor: Color,
     glyphColor: ColorProvider,
     cell: Dp,
     dot: Dp,
@@ -251,55 +249,41 @@ private fun BatteryIndicatorRow(
     // Dots sit (cell - dot)/2 inside their square cells, so a bar filling the row from its edge
     // juts out past the leftmost dot toward the widget border. Inset the gauge by that same amount
     // so its left edge lines up with the dots; the glyph fills the 6th column, centred under the
-    // 6th dot. Sizes are fractions of the dot so everything scales with the widget: the gauge is a
-    // slim bar, the battery glyph a touch smaller than the grid icons (it's secondary information).
-    // cornerRadius only rounds on API 31+; older versions fall back to square corners by design.
+    // 6th dot. The gauge height matches the *visible* dot (dot/2 — the dot circle is radius 6 of a
+    // 24-unit viewport, so it only fills half its box); the battery glyph is a touch smaller than
+    // the grid icons (it's secondary information). cornerRadius on the fill only rounds on API 31+;
+    // older versions fall back to square corners by design (the outline vector stays rounded
+    // regardless, so old APIs show a rounded track with a squared fill — acceptable).
     val edgeInset = (cell - dot) / 2
     val trackWidth = cell * 5 - edgeInset
-    val gaugeHeight = dot * GAUGE_DOT_FRACTION
+    val gaugeHeight = dot / 2
     val gaugeRadius = gaugeHeight / 2
-    val strokeWidth = gaugeHeight * GAUGE_STROKE_FRACTION
-    val innerRadius = gaugeRadius - strokeWidth
     val glyphSize = dot * GLYPH_DOT_FRACTION
-    // Match the inter-row rhythm so every horizontal component is equally spaced. Two consecutive
-    // dot rows leave (cell - dot) of air between them (each dot is inset (cell - dot)/2 in its cell).
-    // Pin the battery row's height to gaugeHeight + (cell - dot) so its content carries that same
-    // (cell - dot)/2 of air top and bottom — otherwise the tall glyph slot sets the height and the
-    // thin gauge floats in a band that reads as a wider gap than the dot rows have.
-    val rowHeight = gaugeHeight + (cell - dot)
+    // The band is one full cell — identical footprint to a dot row — so the gauge, centred in it,
+    // floats with the same air above and below that a visible dot has in its own cell. Every row in
+    // the Column is then cell-tall and the grid reads as five even rows.
+    val rowHeight = cell
     Row(
         modifier = GlanceModifier.width(cell * 6).height(rowHeight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Spacer(modifier = GlanceModifier.width(edgeInset))
         // Pill gauge in the icon tone, echoing the grid's ring-vs-filled-dot language: the empty
-        // portion is an outline, the charged portion a solid fill growing left→right. Glance has no
-        // border modifier, so the outline is faked by nesting a background-tone pill inside a
-        // gauge-tone pill — the exposed rim reads as the stroke. The solid fill then layers on top,
-        // covering the outline wherever the battery is charged. (A translucent background tone would
-        // double-composite over the widget background in the hollow; the default AMOLED black is
-        // opaque, so this is invisible in practice.)
+        // portion is an outline with a genuinely transparent centre (so it never blots a translucent
+        // widget), the charged portion a solid fill growing left→right. The outline is a fill-based
+        // capsule annulus (ic_gauge_track), tinted like the dots; the solid fill then layers on top,
+        // covering the outline wherever the battery is charged.
         Box(
             modifier = GlanceModifier.width(trackWidth).height(gaugeHeight),
             contentAlignment = Alignment.CenterStart,
         ) {
-            Box(
-                modifier =
-                    GlanceModifier
-                        .fillMaxSize()
-                        .background(gaugeColor)
-                        .cornerRadius(gaugeRadius)
-                        .padding(strokeWidth),
-            ) {
-                Box(
-                    modifier =
-                        GlanceModifier
-                            .fillMaxSize()
-                            .background(backgroundColor)
-                            .cornerRadius(innerRadius),
-                    content = {},
-                )
-            }
+            Image(
+                provider = ImageProvider(R.drawable.ic_gauge_track),
+                contentDescription = null,
+                modifier = GlanceModifier.width(trackWidth).height(gaugeHeight),
+                contentScale = ContentScale.FillBounds,
+                colorFilter = ColorFilter.tint(glyphColor),
+            )
             Box(
                 modifier =
                     GlanceModifier
