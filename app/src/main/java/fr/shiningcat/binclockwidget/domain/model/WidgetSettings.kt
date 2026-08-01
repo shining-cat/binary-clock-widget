@@ -25,4 +25,8 @@ data class WidgetSettings(
             TapZone.WEATHER to TapAction.NONE,
         ),
     val tapAppPackages: Map<TapZone, String?> = emptyMap(),
+    // Weather service base URL (Open-Meteo-compatible). Blank = weather disabled: no location
+    // access, no network calls. Weather is opt-in — the user fills this (via the "Use Open-Meteo"
+    // button or their own self-hosted server) to turn it on.
+    val weatherEndpoint: String = "",
 )

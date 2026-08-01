@@ -7,6 +7,7 @@ package fr.shiningcat.binclockwidget.config
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.shiningcat.binclockwidget.data.settings.SettingsStore
+import fr.shiningcat.binclockwidget.data.weather.WeatherEndpoint
 import fr.shiningcat.binclockwidget.domain.model.TapAction
 import fr.shiningcat.binclockwidget.domain.model.TapZone
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
@@ -58,11 +59,20 @@ class SettingsViewModel(
         pkg: String?,
     ) = mutate { it.copy(tapAppPackages = it.tapAppPackages + (zone to pkg)) }
 
+    /**
+     * Persists the weather service base URL. A blank value turns weather off (opt-in). An invalid,
+     * non-blank URL is ignored so the last good value survives while the user is mid-edit; the UI
+     * surfaces the error state. Valid values are stored trimmed; the repository normalizes (trailing
+     * slash) at fetch time.
+     */
+    fun onWeatherEndpointChanged(value: String) {
+        if (!WeatherEndpoint.isValid(value)) return
+        mutate { it.copy(weatherEndpoint = value.trim()) }
+    }
+
     fun refreshPermission() {
         permission.value = locationGranted()
     }
 
-    private fun mutate(transform: (WidgetSettings) -> WidgetSettings) {
-        viewModelScope.launch { store.update(transform) }
-    }
+    private fun mutate(transform: (WidgetSettings) -> WidgetSettings) = viewModelScope.launch { store.update(transform) }
 }

@@ -22,12 +22,15 @@ class WidgetStateResolver(
     private val settings: SettingsStore,
     private val battery: BatteryDataSource,
 ) {
-    suspend fun resolve(): WidgetRenderState =
-        WidgetRenderState(
+    suspend fun resolve(): WidgetRenderState {
+        val current = settings.settings().first()
+        return WidgetRenderState(
             face = TimeEncoder.encode(now()),
             alarmSet = alarm.isAlarmSet(),
-            weather = weather.cached(),
-            settings = settings.settings().first(),
+            // Weather is opt-in: a blank endpoint means disabled, so surface no weather even if a
+            // stale snapshot is still cached — the glyphs disappear the instant weather is turned off.
+            weather = if (current.weatherEndpoint.isBlank()) null else weather.cached(),
+            settings = current,
             battery =
                 battery.read()?.let { status ->
                     BatteryIndicator(
@@ -36,4 +39,5 @@ class WidgetStateResolver(
                     )
                 },
         )
+    }
 }

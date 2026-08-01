@@ -31,6 +31,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import fr.shiningcat.binclockwidget.BinClockApp
 import fr.shiningcat.binclockwidget.config.ui.SettingsScreen
+import fr.shiningcat.binclockwidget.data.weather.WeatherEndpoint
 import fr.shiningcat.binclockwidget.data.weather.WeatherRefreshWorker
 import fr.shiningcat.binclockwidget.widget.BinClockWidget
 import kotlinx.coroutines.launch
@@ -46,11 +47,7 @@ class SettingsActivity : ComponentActivity() {
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             viewModel.refreshPermission()
-            if (granted) {
-                WorkManager
-                    .getInstance(applicationContext)
-                    .enqueue(OneTimeWorkRequestBuilder<WeatherRefreshWorker>().build())
-            }
+            if (granted) enqueueOneTimeWeatherRefresh()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,6 +76,7 @@ class SettingsActivity : ComponentActivity() {
                             onRequestLocation = {
                                 locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
                             },
+                            onWeatherEndpointChanged = ::onWeatherEndpointChanged,
                             onConfirm = { confirm(appWidgetId) },
                         )
                     }
@@ -99,6 +97,27 @@ class SettingsActivity : ComponentActivity() {
             runCatching { BinClockWidget().updateAll(applicationContext) }
                 .onFailure { Log.e(TAG, "Widget refresh on settings exit failed", it) }
         }
+    }
+
+    /**
+     * Persists the endpoint via the view model. Enabling weather (blank -> valid, non-blank) also
+     * kicks off a one-time refresh so the first forecast arrives without waiting for the periodic
+     * worker (it no-ops safely if location isn't granted yet). Turning weather off (to blank) needs
+     * no special handling: the widget re-resolves on its next refresh tick and, seeing a blank
+     * endpoint, drops the weather glyphs.
+     */
+    private fun onWeatherEndpointChanged(value: String) {
+        val wasOff =
+            (viewModel.uiState.value as? SettingsUiState.Ready)?.settings?.weatherEndpoint?.isBlank() ?: true
+        viewModel.onWeatherEndpointChanged(value)
+        val turningOn = value.isNotBlank() && WeatherEndpoint.isValid(value)
+        if (wasOff && turningOn) enqueueOneTimeWeatherRefresh()
+    }
+
+    private fun enqueueOneTimeWeatherRefresh() {
+        WorkManager
+            .getInstance(applicationContext)
+            .enqueue(OneTimeWorkRequestBuilder<WeatherRefreshWorker>().build())
     }
 
     private fun confirm(appWidgetId: Int) {

@@ -52,6 +52,7 @@ class DataStoreSettingsStore(
                     .mapNotNull { zone ->
                         this[packageKey(zone)]?.let { zone to it }
                     }.toMap(),
+            weatherEndpoint = this[WEATHER_ENDPOINT] ?: d.weatherEndpoint, // absent = weather disabled
         )
     }
 
@@ -65,6 +66,7 @@ class DataStoreSettingsStore(
             val pkg = tapAppPackages[zone]
             if (pkg != null) prefs[packageKey(zone)] = pkg else prefs.remove(packageKey(zone))
         }
+        if (weatherEndpoint.isNotBlank()) prefs[WEATHER_ENDPOINT] = weatherEndpoint else prefs.remove(WEATHER_ENDPOINT)
     }
 
     private companion object {
@@ -72,6 +74,7 @@ class DataStoreSettingsStore(
         val COLOR_ARGB = intPreferencesKey("color_argb")
         val ICON_COLOR_ARGB = intPreferencesKey("icon_color_argb")
         val BACKGROUND_COLOR_ARGB = intPreferencesKey("background_color_argb")
+        val WEATHER_ENDPOINT = stringPreferencesKey("weather_endpoint")
 
         fun actionKey(zone: TapZone) = stringPreferencesKey("tap_action_${zone.name}")
 
