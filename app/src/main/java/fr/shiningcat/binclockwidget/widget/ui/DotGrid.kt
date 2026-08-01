@@ -13,7 +13,6 @@ import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -24,11 +23,14 @@ import androidx.glance.LocalSize
 import androidx.glance.action.Action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.action.actionStartActivity
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.size
@@ -36,6 +38,7 @@ import androidx.glance.layout.width
 import androidx.glance.unit.ColorProvider
 import fr.shiningcat.binclockwidget.R
 import fr.shiningcat.binclockwidget.domain.WeatherGlyphMapper
+import fr.shiningcat.binclockwidget.domain.model.BatteryGlyph
 import fr.shiningcat.binclockwidget.domain.model.Cell
 import fr.shiningcat.binclockwidget.domain.model.DayNight
 import fr.shiningcat.binclockwidget.domain.model.GlyphSlot
@@ -44,9 +47,8 @@ import fr.shiningcat.binclockwidget.domain.model.TapAction
 import fr.shiningcat.binclockwidget.domain.model.TapZone
 import fr.shiningcat.binclockwidget.domain.model.WeatherCondition
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
+import fr.shiningcat.binclockwidget.widget.model.BatteryIndicator
 import fr.shiningcat.binclockwidget.widget.model.WidgetRenderState
-
-private val hairlineHeight = 2.dp
 
 /**
  * Glance 1.1.x marks every runtime-Color ColorProvider factory @RestrictTo; the public
@@ -136,11 +138,31 @@ internal fun resolveGlyph(
     }
 }
 
+@DrawableRes
+internal fun batteryGlyphDrawable(glyph: BatteryGlyph): Int? =
+    when (glyph) {
+        BatteryGlyph.NONE -> null
+        BatteryGlyph.LOW -> R.drawable.ic_warning
+        BatteryGlyph.VERY_LOW -> R.drawable.ic_warning_filled
+        BatteryGlyph.CHARGING -> R.drawable.ic_bolt
+    }
+
+// Layout fractions, shared by the height budget and BatteryIndicatorRow so they stay in sync.
+private const val DOT_CELL_FRACTION = 0.55f // dot diameter as a fraction of its square cell
+private const val GLYPH_DOT_FRACTION = 0.8f // battery glyph size as a fraction of the dot
+
+// The battery band is one full cell — the same footprint as a dot row — so the gauge, centred in
+// it, floats with the same air a visible dot has in its cell, and the widget reads as five even
+// rows. This holds regardless of the gauge height (see gaugeHeight == dot/2 in BatteryIndicatorRow).
+// The empty-track outline weight is baked into ic_gauge_track to match the off-dot ring; see that
+// drawable for the rim and aspect-ratio derivation.
+private const val BATTERY_ROW_CELL_FRACTION = 1f
+
 @Composable
 fun DotGrid(state: WidgetRenderState) {
     GlanceTheme {
-        // One base colour drives lit, dim, and separator so all three follow the same source —
-        // Material You's primary when enabled, otherwise the user's ARGB. Deriving dim/separator
+        // One base colour drives lit, dim, and gauge so all three follow the same source —
+        // Material You's primary when enabled, otherwise the user's ARGB. Deriving dim/gauge
         // from a fixed colorArgb here was the bug where off-rings stayed white under Material You.
         val context = LocalContext.current
         val useMaterialYou =
@@ -166,17 +188,21 @@ fun DotGrid(state: WidgetRenderState) {
         // on/off, so a dimmer tint just read as "wrong colour" against the rest of the grid.
         val dimColor: ColorProvider = litColor
         val glyphColor: ColorProvider = ArgbColorProvider(iconColor)
-        // Separator is deliberately softer than the dots so the divider line doesn't compete.
-        // A concrete Color (not a custom ColorProvider): Glance's background(ColorProvider) overload
-        // doesn't paint a runtime-built provider, which is why the separator stayed invisible.
-        val separatorColor: Color = baseColor.copy(alpha = 0.55f)
+        // Gauge shares the icon tone (not the dot tone): it's secondary info that groups visually
+        // with the battery glyph beside it, so they read as one unit distinct from the clock dots.
+        // Concrete Color, not a runtime ColorProvider — Glance's background(ColorProvider) overload
+        // doesn't paint a runtime-built provider (the gotcha the old separator hit).
+        val gaugeColor: Color = iconColor
         // User-chosen background; Material You never overrides it, so pure AMOLED black is preserved.
         // The alpha channel is honoured, allowing a translucent widget over the launcher wallpaper.
         val backgroundColor: Color = Color(state.settings.backgroundColorArgb)
 
         val size = LocalSize.current
-        val cell = minOf(size.width / 6, size.height / 4)
-        val dot = cell * 0.55f
+        // Height is shared by five stacked components — four dot rows plus the battery band between
+        // minutes and day. Reserve the band's fraction so it doesn't overflow and make the launcher
+        // squeeze the bottom (date) rows; the old 2.dp hairline was negligible, this band isn't.
+        val cell = minOf(size.width / 6, size.height / (4 + BATTERY_ROW_CELL_FRACTION))
+        val dot = cell * DOT_CELL_FRACTION
 
         Box(
             modifier = GlanceModifier.fillMaxSize().background(backgroundColor),
@@ -195,22 +221,92 @@ fun DotGrid(state: WidgetRenderState) {
                     ) {
                         row.cells.forEach { c -> CellImage(c, row.kind, state, litColor, dimColor, glyphColor, cell, dot) }
                     }
-                    if (state.settings.hairline && index == 1) {
-                        // A Box, not a Spacer: Glance Spacer backgrounds don't paint, which is why
-                        // the separator was invisible however it was toggled.
-                        // Width cell*5 (not cell*6): inset half a cell each side so the line aligns
-                        // with the dot columns instead of running to the widget edges. The Column
-                        // centres it horizontally.
-                        Box(
-                            modifier =
-                                GlanceModifier
-                                    .height(hairlineHeight)
-                                    .width(cell * 5)
-                                    .background(separatorColor),
-                            content = {},
+                    if (index == 1) {
+                        BatteryIndicatorRow(
+                            indicator = state.battery,
+                            gaugeColor = gaugeColor,
+                            glyphColor = glyphColor,
+                            cell = cell,
+                            dot = dot,
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BatteryIndicatorRow(
+    indicator: BatteryIndicator?,
+    gaugeColor: Color,
+    glyphColor: ColorProvider,
+    cell: Dp,
+    dot: Dp,
+) {
+    val fraction = indicator?.fraction ?: 0f
+    val glyph = indicator?.glyph ?: BatteryGlyph.NONE
+    // Dots sit (cell - dot)/2 inside their square cells, so a bar filling the row from its edge
+    // juts out past the leftmost dot toward the widget border. Inset the gauge by that same amount
+    // so its left edge lines up with the dots; the glyph fills the 6th column, centred under the
+    // 6th dot. The gauge height matches the *visible* dot (dot/2 — the dot circle is radius 6 of a
+    // 24-unit viewport, so it only fills half its box); the battery glyph is a touch smaller than
+    // the grid icons (it's secondary information). cornerRadius on the fill only rounds on API 31+;
+    // older versions fall back to square corners by design (the outline vector stays rounded
+    // regardless, so old APIs show a rounded track with a squared fill — acceptable).
+    val edgeInset = (cell - dot) / 2
+    val trackWidth = cell * 5 - edgeInset
+    val gaugeHeight = dot / 2
+    val gaugeRadius = gaugeHeight / 2
+    val glyphSize = dot * GLYPH_DOT_FRACTION
+    // The band is one full cell — identical footprint to a dot row — so the gauge, centred in it,
+    // floats with the same air above and below that a visible dot has in its own cell. Every row in
+    // the Column is then cell-tall and the grid reads as five even rows.
+    val rowHeight = cell
+    Row(
+        modifier = GlanceModifier.width(cell * 6).height(rowHeight),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Spacer(modifier = GlanceModifier.width(edgeInset))
+        // Pill gauge in the icon tone, echoing the grid's ring-vs-filled-dot language: the empty
+        // portion is an outline with a genuinely transparent centre (so it never blots a translucent
+        // widget), the charged portion a solid fill growing left→right. The outline is a fill-based
+        // capsule annulus (ic_gauge_track), tinted like the dots; the solid fill then layers on top,
+        // covering the outline wherever the battery is charged.
+        Box(
+            modifier = GlanceModifier.width(trackWidth).height(gaugeHeight),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Image(
+                provider = ImageProvider(R.drawable.ic_gauge_track),
+                contentDescription = null,
+                modifier = GlanceModifier.width(trackWidth).height(gaugeHeight),
+                contentScale = ContentScale.FillBounds,
+                colorFilter = ColorFilter.tint(glyphColor),
+            )
+            Box(
+                modifier =
+                    GlanceModifier
+                        .width(trackWidth * fraction)
+                        .height(gaugeHeight)
+                        .background(gaugeColor)
+                        .cornerRadius(gaugeRadius),
+                content = {},
+            )
+        }
+        // Glyph slot: the 6th column (cell wide), icon centred under the 6th dot. Height tracks the
+        // pinned row so the glyph never stretches the row past the dot rhythm.
+        Box(
+            modifier = GlanceModifier.width(cell).height(rowHeight),
+            contentAlignment = Alignment.Center,
+        ) {
+            batteryGlyphDrawable(glyph)?.let { res ->
+                Image(
+                    provider = ImageProvider(res),
+                    contentDescription = null,
+                    modifier = GlanceModifier.size(glyphSize),
+                    colorFilter = ColorFilter.tint(glyphColor),
+                )
             }
         }
     }

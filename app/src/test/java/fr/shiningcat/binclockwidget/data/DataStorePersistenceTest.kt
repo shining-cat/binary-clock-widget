@@ -78,7 +78,6 @@ class DataStorePersistenceTest {
             DataStoreSettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
         settings.update {
             it.copy(
-                hairline = true,
                 useMaterialYou = true,
                 colorArgb = 0xFF00FF00.toInt(),
                 tapActions = it.tapActions + (TapZone.WEATHER to TapAction.OPEN_APP),
@@ -86,7 +85,6 @@ class DataStorePersistenceTest {
             )
         }
         val result = settings.settings().first()
-        assertEquals(true, result.hairline)
         assertEquals(true, result.useMaterialYou)
         assertEquals(0xFF00FF00.toInt(), result.colorArgb)
         assertEquals(TapAction.OPEN_APP, result.tapActions[TapZone.WEATHER])

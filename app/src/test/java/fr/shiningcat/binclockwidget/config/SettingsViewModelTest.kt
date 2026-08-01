@@ -113,20 +113,6 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `onHairlineToggled writes through`() =
-        runTest {
-            val vm = viewModel()
-            collect(vm)
-            advanceUntilIdle()
-
-            vm.onHairlineToggled(true)
-            advanceUntilIdle()
-
-            assertTrue(store.state.value.hairline)
-            assertTrue((vm.uiState.value as SettingsUiState.Ready).settings.hairline)
-        }
-
-    @Test
     fun `onTapActionChanged updates the zone action`() =
         runTest {
             val vm = viewModel()

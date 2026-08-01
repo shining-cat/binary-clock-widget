@@ -1,0 +1,37 @@
+<!--
+  SPDX-FileCopyrightText: 2026 shining-cat
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<!--
+  Empty-track outline for the battery gauge: a fill-based capsule annulus (not a stroke),
+  tinted at runtime via ColorFilter exactly like ic_dot_ring. The interior is genuinely
+  transparent, so a translucent-background widget shows the wallpaper through the hollow —
+  a nested opaque "hole" can't do that (it just reveals the pill behind it).
+
+  Sizing matches the *visible* dot, not its cell box. ic_dot_filled draws a radius-6 circle in
+  a 24-unit viewport, so a dot rendered in a `dot`-sized box only shows a dot/2-tall circle;
+  the gauge is therefore rendered at height == dot/2. The off-dot ring rim is 1.5/24 of that
+  box == dot/16. To land the same dot/16 rim at a dot/2-tall gauge, the vector rim is 1/8 of
+  its height (1 unit in 8): (dot/2)/8 == dot/16. Gauge and dots share one outline weight.
+
+  Viewport aspect (139:8 ≈ 17.4) matches the gauge track's fixed aspect
+  (trackWidth/gaugeHeight = (5 - (1-DOT_CELL_FRACTION)/2)/(DOT_CELL_FRACTION/2) ≈ 17.36 with
+  DOT_CELL_FRACTION = 0.55 and gaugeHeight = dot/2). Because the two match, FillBounds scales
+  the vector near-uniformly and the rim stays even all the way around. If DOT_CELL_FRACTION or
+  the gaugeHeight == dot/2 relationship changes, re-derive this aspect or the rim will thicken
+  on the caps.
+
+  evenOdd carves the inner capsule out of the outer one. Both are full capsules (corner
+  radius = half height), so the straight vertical edges are zero-length and the caps are
+  clean semicircles.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="139dp"
+    android:height="8dp"
+    android:viewportWidth="139"
+    android:viewportHeight="8">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M4,0 L135,0 A4,4 0 0 1 135,8 L4,8 A4,4 0 0 1 4,0 Z M4,1 L135,1 A3,3 0 0 1 135,7 L4,7 A3,3 0 0 1 4,1 Z" />
+</vector>
