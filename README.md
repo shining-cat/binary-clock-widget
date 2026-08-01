@@ -15,11 +15,11 @@ Weather is **opt-in and off by default**: the clock, date, alarm and battery all
 work out of the box, and the app makes no network or location calls until you
 turn weather on and point it at a server. See [Weather](#weather) for details.
 
+## Screenshots
+
 <p align="center">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_widget_amoled.png" width="320" alt="The widget on an AMOLED home screen: binary time and date with alarm, weather and battery glyphs" />
 </p>
-
-## Screenshots
 
 The widget with weather turned off — no weather glyph, since weather is opt-in:
 
