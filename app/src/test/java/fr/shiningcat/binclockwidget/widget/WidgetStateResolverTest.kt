@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
+private const val OPEN_METEO = "https://api.open-meteo.com/"
+
 private class FakeWeatherRepo(
     private val snapshot: WeatherSnapshot?,
 ) : WeatherRepository {
@@ -50,7 +52,7 @@ class WidgetStateResolverTest {
                     now = { LocalDateTime.of(2026, 7, 28, 13, 47) },
                     alarm = AlarmDataSource { true },
                     weather = FakeWeatherRepo(WeatherSnapshot(0, true, 1, 3, 1L)),
-                    settings = FakeSettingsStore(WidgetSettings()),
+                    settings = FakeSettingsStore(WidgetSettings(weatherEndpoint = OPEN_METEO)),
                     battery = BatteryDataSource { BatteryStatus(percent = 50, isCharging = false) },
                 )
 
@@ -59,7 +61,7 @@ class WidgetStateResolverTest {
             assertEquals(4, s.face.rows.size)
             assertTrue(s.alarmSet)
             assertEquals(0, s.weather?.nowCode)
-            assertEquals(WidgetSettings(), s.settings)
+            assertEquals(WidgetSettings(weatherEndpoint = OPEN_METEO), s.settings)
             assertEquals(0.5f, s.battery?.fraction)
             assertEquals(BatteryGlyph.NONE, s.battery?.glyph)
         }
@@ -96,6 +98,38 @@ class WidgetStateResolverTest {
             val s = resolver.resolve()
 
             assertEquals(1.0f, s.battery?.fraction)
+        }
+
+    @Test
+    fun `a blank weather endpoint disables weather even when a snapshot is cached`() =
+        runTest {
+            val resolver =
+                WidgetStateResolver(
+                    now = { LocalDateTime.of(2026, 7, 28, 13, 47) },
+                    alarm = AlarmDataSource { false },
+                    // Cache still holds a snapshot from before weather was turned off...
+                    weather = FakeWeatherRepo(WeatherSnapshot(0, true, 1, 3, 1L)),
+                    // ...but the endpoint is blank (disabled), so the widget must show no weather.
+                    settings = FakeSettingsStore(WidgetSettings(weatherEndpoint = "")),
+                    battery = BatteryDataSource { null },
+                )
+
+            assertNull(resolver.resolve().weather)
+        }
+
+    @Test
+    fun `a configured weather endpoint surfaces the cached snapshot`() =
+        runTest {
+            val resolver =
+                WidgetStateResolver(
+                    now = { LocalDateTime.of(2026, 7, 28, 13, 47) },
+                    alarm = AlarmDataSource { false },
+                    weather = FakeWeatherRepo(WeatherSnapshot(2, true, 1, 3, 1L)),
+                    settings = FakeSettingsStore(WidgetSettings(weatherEndpoint = "https://api.open-meteo.com/")),
+                    battery = BatteryDataSource { null },
+                )
+
+            assertEquals(2, resolver.resolve().weather?.nowCode)
         }
 
     @Test

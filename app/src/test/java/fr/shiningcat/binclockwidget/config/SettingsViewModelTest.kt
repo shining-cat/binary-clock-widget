@@ -152,6 +152,49 @@ class SettingsViewModelTest {
         }
 
     @Test
+    fun `onWeatherEndpointChanged persists a valid url (trimmed)`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
+
+            vm.onWeatherEndpointChanged("  https://api.open-meteo.com/  ")
+            advanceUntilIdle()
+
+            assertEquals("https://api.open-meteo.com/", store.state.value.weatherEndpoint)
+        }
+
+    @Test
+    fun `onWeatherEndpointChanged with blank disables weather`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
+            vm.onWeatherEndpointChanged("https://api.open-meteo.com/")
+            advanceUntilIdle()
+
+            vm.onWeatherEndpointChanged("")
+            advanceUntilIdle()
+
+            assertEquals("", store.state.value.weatherEndpoint)
+        }
+
+    @Test
+    fun `onWeatherEndpointChanged ignores an invalid url, keeping the last good value`() =
+        runTest {
+            val vm = viewModel()
+            collect(vm)
+            advanceUntilIdle()
+            vm.onWeatherEndpointChanged("https://api.open-meteo.com/")
+            advanceUntilIdle()
+
+            vm.onWeatherEndpointChanged("not a url")
+            advanceUntilIdle()
+
+            assertEquals("https://api.open-meteo.com/", store.state.value.weatherEndpoint)
+        }
+
+    @Test
     fun `refreshPermission re-reads the injected checker`() =
         runTest {
             checker.granted = false

@@ -110,6 +110,26 @@ class DataStorePersistenceTest {
     }
 
     @Test
+    fun `weather endpoint round-trips and blank removes the key`(
+        @TempDir dir: File,
+    ) = runTest(UnconfinedTestDispatcher()) {
+        val settings: SettingsStore =
+            DataStoreSettingsStore(backgroundScope.store(dir, "settings.preferences_pb"))
+
+        // Default (empty store) is blank == weather disabled / opt-in.
+        assertEquals("", settings.settings().first().weatherEndpoint)
+
+        // A configured endpoint persists and reads back.
+        settings.update { it.copy(weatherEndpoint = "https://weather.example.org/") }
+        assertEquals("https://weather.example.org/", settings.settings().first().weatherEndpoint)
+
+        // Clearing back to blank must REMOVE the key, not leave the previous URL behind —
+        // otherwise "disable weather" would silently keep hitting the old server.
+        settings.update { it.copy(weatherEndpoint = "") }
+        assertEquals("", settings.settings().first().weatherEndpoint)
+    }
+
+    @Test
     fun `background colour round-trips including alpha`(
         @TempDir dir: File,
     ) = runTest(UnconfinedTestDispatcher()) {

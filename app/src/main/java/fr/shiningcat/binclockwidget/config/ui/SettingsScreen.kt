@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.shiningcat.binclockwidget.config.SettingsUiState
 import fr.shiningcat.binclockwidget.config.SettingsViewModel
+import fr.shiningcat.binclockwidget.data.weather.WeatherEndpoint
 import fr.shiningcat.binclockwidget.domain.model.TapAction
 import fr.shiningcat.binclockwidget.domain.model.TapZone
 import fr.shiningcat.binclockwidget.domain.model.WidgetSettings
@@ -90,6 +91,9 @@ private fun loadLaunchableApps(pm: PackageManager): List<InstalledApp> {
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onRequestLocation: () -> Unit,
+    // Wrapped by the host activity so enabling weather (blank -> non-blank) can also kick off a
+    // one-time refresh; the raw persistence still happens in the view model.
+    onWeatherEndpointChanged: (String) -> Unit,
     onConfirm: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -101,6 +105,7 @@ fun SettingsScreen(
         onMaterialYouToggled = viewModel::onMaterialYouToggled,
         onTapActionChanged = viewModel::onTapActionChanged,
         onTapAppPackageChanged = viewModel::onTapAppPackageChanged,
+        onWeatherEndpointChanged = onWeatherEndpointChanged,
         onRequestLocation = onRequestLocation,
         onConfirm = onConfirm,
     )
@@ -115,6 +120,7 @@ private fun SettingsScreen(
     onMaterialYouToggled: (Boolean) -> Unit,
     onTapActionChanged: (TapZone, TapAction) -> Unit,
     onTapAppPackageChanged: (TapZone, String?) -> Unit,
+    onWeatherEndpointChanged: (String) -> Unit,
     onRequestLocation: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -131,6 +137,7 @@ private fun SettingsScreen(
                 onMaterialYouToggled = onMaterialYouToggled,
                 onTapActionChanged = onTapActionChanged,
                 onTapAppPackageChanged = onTapAppPackageChanged,
+                onWeatherEndpointChanged = onWeatherEndpointChanged,
                 onRequestLocation = onRequestLocation,
                 onConfirm = onConfirm,
             )
@@ -147,6 +154,7 @@ private fun ReadySettings(
     onMaterialYouToggled: (Boolean) -> Unit,
     onTapActionChanged: (TapZone, TapAction) -> Unit,
     onTapAppPackageChanged: (TapZone, String?) -> Unit,
+    onWeatherEndpointChanged: (String) -> Unit,
     onRequestLocation: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -207,13 +215,21 @@ private fun ReadySettings(
                 }
             }
 
+            Section("Weather source") {
+                WeatherSourceSetting(
+                    endpoint = settings.weatherEndpoint,
+                    onWeatherEndpointChanged = onWeatherEndpointChanged,
+                )
+            }
+
             Section("Location") {
                 Text(
                     text =
                         if (state.locationGranted) {
                             "Location permission granted — weather can update."
                         } else {
-                            "Location permission is required to show local weather."
+                            "Coarse location is required for weather. It is only used once weather " +
+                                "is turned on above."
                         },
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -385,6 +401,60 @@ private fun TapZoneSetting(
             optionLabel = { it.label },
             onSelected = { onTapAppPackageChanged(zone, it.packageName) },
         )
+    }
+}
+
+/**
+ * Weather is opt-in. A blank endpoint means weather is off — no location access, no network calls.
+ * The user turns it on by tapping "Use Open-Meteo" (the free public service) or typing their own
+ * Open-Meteo-compatible URL (e.g. a self-hosted instance). Invalid, non-blank input is flagged but
+ * not persisted, so the last good value survives while the user edits.
+ */
+@Composable
+private fun WeatherSourceSetting(
+    endpoint: String,
+    onWeatherEndpointChanged: (String) -> Unit,
+) {
+    // Local field state so partially-typed (temporarily invalid) input stays visible; the view model
+    // only persists valid values. Seeded once — weatherEndpoint has no other mutation path.
+    var text by remember { mutableStateOf(endpoint) }
+    val trimmed = text.trim()
+    val isError = trimmed.isNotEmpty() && !WeatherEndpoint.isValid(trimmed)
+    Text(
+        text =
+            if (trimmed.isEmpty()) {
+                "Weather is off. Add a weather server to show conditions on the widget — tap " +
+                    "“Use Open-Meteo” for the free public service, or enter your own " +
+                    "Open-Meteo-compatible URL."
+            } else {
+                "Weather is on. Conditions are fetched from this server using your coarse " +
+                    "location. Clear the field to turn weather off."
+            },
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    TextField(
+        value = text,
+        onValueChange = {
+            text = it
+            onWeatherEndpointChanged(it)
+        },
+        label = { Text("Weather server URL") },
+        placeholder = { Text(WeatherEndpoint.DEFAULT_BASE_URL) },
+        isError = isError,
+        singleLine = true,
+        supportingText =
+            if (isError) {
+                { Text("Enter a valid http(s) URL, or leave blank to turn weather off.") }
+            } else {
+                null
+            },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Button(onClick = {
+        text = WeatherEndpoint.DEFAULT_BASE_URL
+        onWeatherEndpointChanged(WeatherEndpoint.DEFAULT_BASE_URL)
+    }) {
+        Text("Use Open-Meteo")
     }
 }
 

@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.AlarmClock
-import android.provider.CalendarContract
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -60,11 +59,12 @@ internal data class ArgbColorProvider(
     override fun getColor(context: Context): Color = color
 }
 
+// Nullable: an unmappable condition renders nothing (empty cell) rather than a placeholder dash.
 @DrawableRes
 internal fun weatherDrawable(
     condition: WeatherCondition,
     dayNight: DayNight,
-): Int =
+): Int? =
     when (condition) {
         WeatherCondition.CLEAR -> {
             if (dayNight == DayNight.DAY) R.drawable.ic_light_mode else R.drawable.ic_clear_night
@@ -103,15 +103,17 @@ internal fun weatherDrawable(
             R.drawable.ic_thunderstorm
         }
         WeatherCondition.UNKNOWN -> {
-            R.drawable.ic_remove
+            null
         }
     }
 
+// Nullable: weather slots render nothing when weather is disabled/unavailable or the code is
+// unmappable. ALARM always resolves to a drawable, so a null return means "draw no glyph here".
 @DrawableRes
 internal fun resolveGlyph(
     slot: GlyphSlot,
     state: WidgetRenderState,
-): Int {
+): Int? {
     val weather = state.weather
     return when (slot) {
         GlyphSlot.ALARM -> {
@@ -123,17 +125,17 @@ internal fun resolveGlyph(
                     WeatherGlyphMapper.toCondition(it.nowCode),
                     if (it.nowIsDay) DayNight.DAY else DayNight.NIGHT,
                 )
-            } ?: R.drawable.ic_remove
+            }
         }
         GlyphSlot.WEATHER_TODAY -> {
             weather?.let {
                 weatherDrawable(WeatherGlyphMapper.toCondition(it.todayCode), DayNight.DAY)
-            } ?: R.drawable.ic_remove
+            }
         }
         GlyphSlot.WEATHER_TOMORROW -> {
             weather?.let {
                 weatherDrawable(WeatherGlyphMapper.toCondition(it.tomorrowCode), DayNight.DAY)
-            } ?: R.drawable.ic_remove
+            }
         }
     }
 }
@@ -341,12 +343,16 @@ private fun CellImage(
                 )
             }
             is Cell.Glyph -> {
-                Image(
-                    provider = ImageProvider(resolveGlyph(cell.slot, state)),
-                    contentDescription = null,
-                    modifier = imageModifier,
-                    colorFilter = ColorFilter.tint(glyphColor),
-                )
+                // A null glyph (weather disabled/unavailable) draws nothing — the tap zone stays,
+                // the cell is simply empty rather than showing a placeholder dash.
+                resolveGlyph(cell.slot, state)?.let { glyph ->
+                    Image(
+                        provider = ImageProvider(glyph),
+                        contentDescription = null,
+                        modifier = imageModifier,
+                        colorFilter = ColorFilter.tint(glyphColor),
+                    )
+                }
             }
         }
     }
@@ -386,15 +392,15 @@ private fun actionForZone(
             )
         }
         TapAction.OPEN_CALENDAR -> {
+            // Launch the default calendar app via CATEGORY_APP_CALENDAR rather than an
+            // ACTION_VIEW on content://.../calendar. A content URI in the widget's PendingIntent
+            // makes the AppWidget host attempt a URI-permission grant against CalendarProvider2 on
+            // every update; with no READ_CALENDAR permission that logs a Permission Denial burst
+            // each refresh. CATEGORY_APP_CALENDAR carries no content URI, so the check never runs.
             actionStartActivity(
-                Intent(
-                    Intent.ACTION_VIEW,
-                    CalendarContract.CONTENT_URI
-                        .buildUpon()
-                        .appendPath("time")
-                        .appendPath(System.currentTimeMillis().toString())
-                        .build(),
-                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_APP_CALENDAR)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }
         TapAction.OPEN_CLOCK -> {

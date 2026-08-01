@@ -59,17 +59,25 @@ val appModule =
 
         single { Json { ignoreUnknownKeys = true } }
         single { OkHttpClient() }
-        single {
-            Retrofit
-                .Builder()
-                .baseUrl("https://api.open-meteo.com/")
-                .client(get())
-                .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
-                .build()
+        // The weather base URL is user-configurable, so the API can't be a fixed singleton. This
+        // factory builds an OpenMeteoApi bound to any base URL while reusing the shared OkHttp/JSON
+        // stack captured once here.
+        single<(String) -> OpenMeteoApi> {
+            val client = get<OkHttpClient>()
+            val converter = get<Json>().asConverterFactory("application/json".toMediaType())
+            val factory: (String) -> OpenMeteoApi = { baseUrl ->
+                Retrofit
+                    .Builder()
+                    .baseUrl(baseUrl)
+                    .client(client)
+                    .addConverterFactory(converter)
+                    .build()
+                    .create(OpenMeteoApi::class.java)
+            }
+            factory
         }
-        single { get<Retrofit>().create(OpenMeteoApi::class.java) }
 
-        single<WeatherRepository> { WeatherRepositoryImpl(get(), get()) }
+        single<WeatherRepository> { WeatherRepositoryImpl(apiFactory = get(), settings = get(), cache = get()) }
 
         single<LocationDataSource> { AndroidLocationDataSource(androidContext()) }
         single<AlarmDataSource> { AndroidAlarmDataSource(androidContext()) }
