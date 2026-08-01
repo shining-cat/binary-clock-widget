@@ -11,6 +11,30 @@ and day rows. The aesthetic is deliberately austere — solid dots on true black
 no chrome, no colour — so it disappears into an AMOLED wallpaper and sips
 battery.
 
+Weather is **opt-in and off by default**: the clock, date, alarm and battery all
+work out of the box, and the app makes no network or location calls until you
+turn weather on and point it at a server. See [Weather](#weather) for details.
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_widget_amoled.png" width="320" alt="The widget on an AMOLED home screen: binary time and date with alarm, weather and battery glyphs" />
+</p>
+
+## Screenshots
+
+The widget with weather turned off — no weather glyph, since weather is opt-in:
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_widget_weather_off.png" width="320" alt="The widget with weather off: no weather glyphs" />
+</p>
+
+Configuration — appearance, and turning weather on or off:
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03_settings_appearance.png" width="220" alt="Settings: how-to-read cheatsheet, colours and tap actions" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04_settings_weather_on.png" width="220" alt="Settings: weather enabled with an Open-Meteo endpoint" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_settings_weather_off.png" width="220" alt="Settings: weather disabled (opt-in), empty endpoint field" />
+</p>
+
 ## How to read it
 
 The face is a grid of **rows** (values) and **columns** (place values):
@@ -47,8 +71,9 @@ the day row, with **today's** and **tomorrow's** forecast side-by-side on the
 month row just below. Only the "now" glyph is day/night aware — its sun becomes a
 moon after dark; the two forecast glyphs always use their daytime icon. The
 conditions map to Material Symbols icons — clear, partly cloudy, overcast, fog,
-drizzle, rain, rain showers, snow, snow showers, and thunderstorm — with a dash
-shown when no forecast has been fetched yet.
+drizzle, rain, rain showers, snow, snow showers, and thunderstorm. When weather
+is off, or no forecast has been fetched yet, those cells are simply empty — no
+placeholder glyph.
 
 ### Battery indicator
 
@@ -74,17 +99,45 @@ low. The bolt is a distinct shape so charging is never confused with a warning.
 There's deliberately no charging-speed distinction and no colour — see the
 [design notes](#the-battery-glyph-is-a-warning-not-a-battery) below.
 
+## Weather
+
+Weather is **opt-in and off by default**. Until you point the app at a weather
+server it makes no network or location calls and shows no weather glyphs — the
+clock, date, alarm and battery all work regardless.
+
+To turn it on, open settings and either tap **Use Open-Meteo** for the free,
+keyless public [Open-Meteo](https://open-meteo.com) service
+(`https://api.open-meteo.com/`), or enter your own **Open-Meteo-compatible**
+endpoint — for example a [self-hosted Open-Meteo instance](https://github.com/open-meteo/open-meteo).
+Clear the field to turn weather back off.
+
+The endpoint must speak Open-Meteo's API: the app calls `/v1/forecast` and reads
+the WMO `weather_code` values it returns. Any server mirroring that contract
+works; an arbitrary weather API will not. This is why the setting is a server
+URL, not a free choice of provider.
+
+Once enabled, weather uses two permissions:
+
+- **INTERNET** — to reach the weather server you configured.
+- **Coarse location** (`ACCESS_COARSE_LOCATION`) — to fetch conditions for where
+  you are. Location is read via the platform `LocationManager` only (no fused or
+  Google Play location), and your coordinates are sent only to the server you
+  configured, only while weather is on.
+
 ## Refresh cadence
 
-Changes you make in **settings** (colours, toggles) apply immediately — the
-widget is redrawn as soon as you save.
+Changes you make in **settings** (colours, tap actions) apply as soon as you
+leave the screen — the widget is redrawn on exit. Turning **weather on or off**
+is the exception: it changes what the widget fetches rather than how it draws, so
+the weather glyphs appear or clear on the next refresh tick (below), not the
+moment you leave settings.
 
-The **live signals** the widget observes — the **alarm state** and the **battery
-indicator** (both the gauge and its glyph) — update on the widget's own refresh
-tick, roughly once a minute. Glance compiles to `RemoteViews`, which has no way
-to react to a broadcast the instant it fires, so plugging in the charger (for
-example) can take up to a refresh cycle before the bolt appears. This is
-expected, not a bug.
+The **live signals** the widget observes — the **alarm state**, the **battery
+indicator** (both the gauge and its glyph), and the **weather** glyphs — update
+on the widget's own refresh tick, roughly once a minute. Glance compiles to
+`RemoteViews`, which has no way to react to an event the instant it fires, so
+plugging in the charger, or turning weather off, can take up to a refresh cycle
+to show. This is expected, not a bug.
 
 ## Design notes
 
@@ -134,9 +187,9 @@ is deliberately monochrome.
 ## Distribution
 
 BinClockWidget targets **F-Droid**: it is 100% FOSS and contains **no Google
-Play Services, no Firebase, and no proprietary SDKs**. Weather uses the keyless
-[Open-Meteo](https://open-meteo.com) API; location uses the platform
-`LocationManager` (no fused/Play location).
+Play Services, no Firebase, and no proprietary SDKs**. Its one optional network
+feature is [Weather](#weather) — opt-in, off by default, and backed by the
+keyless Open-Meteo API or your own self-hosted server.
 
 ## Build
 

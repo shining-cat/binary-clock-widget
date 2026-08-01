@@ -1,0 +1,7 @@
+Version 0.1.1
+
+- Weather is now opt-in and off by default: no network or location calls until you set a weather server URL in settings
+- Add a configurable weather endpoint — use the public Open-Meteo API or point at your own self-hosted instance
+- Fix weather never getting a location fix (dropped the FINE-only passive provider; use the platform fused/network providers with a fresh single fix)
+- An unmapped weather condition now renders nothing instead of a placeholder dash
+- Silence the calendar-provider permission warnings when tapping the date zone to open the calendar
