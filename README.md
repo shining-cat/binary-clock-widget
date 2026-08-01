@@ -6,9 +6,10 @@ An AMOLED-black, monochrome **binary-clock** Android home-screen widget.
 
 It renders the current time and date as a 6×4 grid of dots. Cells that would
 otherwise go unused carry a couple of small extras: the device **alarm state**
-and a **weather** glyph. The aesthetic is deliberately austere — solid dots on
-true black, no chrome, no colour — so it disappears into an AMOLED wallpaper and
-sips battery.
+and **weather** glyphs. A slim **battery indicator** sits between the minutes
+and day rows. The aesthetic is deliberately austere — solid dots on true black,
+no chrome, no colour — so it disappears into an AMOLED wallpaper and sips
+battery.
 
 ## How to read it
 
@@ -23,8 +24,67 @@ The face is a grid of **rows** (values) and **columns** (place values):
 For example, a minutes row with the `32`, `8`, and `2` dots lit reads
 `32 + 8 + 2 = 42`.
 
-The cells not needed by the low-value ends of the shorter rows are reused to show
-the **alarm state** and a **weather** condition glyph.
+### The corner glyphs
+
+The cells not needed by the low-value ends of the shorter rows are reused for a
+handful of glyphs — the **alarm state** and three **weather** readings. Each has
+a fixed, always-reserved cell:
+
+| Cell                                          | Glyph                                                                                    |
+|-----------------------------------------------|------------------------------------------------------------------------------------------|
+| Hours row · leftmost column (the unused `32`) | **Alarm state** — a lit alarm clock when one is scheduled, an "alarm off" icon otherwise |
+| Day row · leftmost column (the unused `32`)   | **Weather now** — current conditions, day/night aware                                    |
+| Month row · leftmost column (the unused `32`) | **Weather today** — the day's forecast                                                   |
+| Month row · second column (the unused `16`)   | **Weather tomorrow** — the next day's forecast                                           |
+
+Those cells are free because the hours row never needs the `32` place (hours only
+reach 23), the day row never needs it (days only reach 31), and the month row
+needs only the low four places (months only reach 12) — so a glyph there can
+never collide with a lit time/date bit.
+
+The three weather glyphs cluster in the bottom-left: **current conditions** on
+the day row, with **today's** and **tomorrow's** forecast side-by-side on the
+month row just below. Only the "now" glyph is day/night aware — its sun becomes a
+moon after dark; the two forecast glyphs always use their daytime icon. The
+conditions map to Material Symbols icons — clear, partly cloudy, overcast, fog,
+drizzle, rain, rain showers, snow, snow showers, and thunderstorm — with a dash
+shown when no forecast has been fetched yet.
+
+### Battery indicator
+
+Between the minutes and day rows sits a battery readout that's always on. It has
+two parts, both in the icon tone:
+
+- A **level gauge** spanning the first five columns: a hollow, capsule-shaped
+  track filled left→right in proportion to the charge (a full track is 100%).
+  The track's centre is genuinely transparent, so a translucent-background
+  widget shows the wallpaper through it.
+- A **state glyph** in the sixth column, which only appears when there's
+  something to say. One glyph at a time:
+
+  | Glyph | Meaning |
+  |-------|---------|
+  | ⚡ bolt | Charging (at any level — charging always wins) |
+  | △ outline triangle | Low: 20% or less, discharging |
+  | ▲ filled triangle | Very low: 10% or less, discharging |
+  | *(empty)* | Above 20% and discharging — gauge only |
+
+The escalation reads as one shape getting "louder": hollow at low, solid at very
+low. The bolt is a distinct shape so charging is never confused with a warning.
+There's deliberately no charging-speed distinction and no colour — see the
+[design notes](#the-battery-glyph-is-a-warning-not-a-battery) below.
+
+## Refresh cadence
+
+Changes you make in **settings** (colours, toggles) apply immediately — the
+widget is redrawn as soon as you save.
+
+The **live signals** the widget observes — the **alarm state** and the **battery
+indicator** (both the gauge and its glyph) — update on the widget's own refresh
+tick, roughly once a minute. Glance compiles to `RemoteViews`, which has no way
+to react to a broadcast the instant it fires, so plugging in the charger (for
+example) can take up to a refresh cycle before the bolt appears. This is
+expected, not a bug.
 
 ## Design notes
 
@@ -45,6 +105,21 @@ Mirroring the OS is the honest best-effort a normal app can make.
 Note that an OEM status bar may appear to filter these internally; it has
 privileged access to the alarm database that third-party apps do not, so its
 behaviour can't be reliably reproduced through the public API.
+
+### The battery glyph is a warning, not a battery
+
+The glyph beside the gauge is pure warning semantics — an alert triangle or a
+charging bolt — never a little battery outline. The gauge already owns the
+battery metaphor; a mini-battery next to it would just say the same thing twice.
+So the glyph stays quiet until the charge is low enough to matter, then speaks in
+warning shapes only.
+
+There's no slow/normal/fast charging distinction: Android can't report charge
+rate reliably in a once-a-minute widget (`BATTERY_PROPERTY_CURRENT_NOW` is noisy
+or unsupported on many devices, and plug type is only a coarse proxy), so a
+single "charging" bolt is the honest signal. And there's no colour — any hue
+would collide with Material You or the user's own colour pick, and the whole face
+is deliberately monochrome.
 
 ## Tech stack
 
