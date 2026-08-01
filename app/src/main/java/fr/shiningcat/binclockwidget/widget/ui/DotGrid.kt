@@ -6,6 +6,7 @@ package fr.shiningcat.binclockwidget.widget.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.AlarmClock
 import androidx.annotation.DrawableRes
@@ -387,9 +388,7 @@ private fun actionForZone(
             null
         }
         TapAction.OPEN_ALARMS -> {
-            actionStartActivity(
-                Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
+            actionStartActivity(alarmsIntent(context.packageManager))
         }
         TapAction.OPEN_CALENDAR -> {
             // Launch the default calendar app via CATEGORY_APP_CALENDAR rather than an
@@ -413,6 +412,19 @@ private fun actionForZone(
                 ?.let { actionStartActivity(it) }
         }
     }
+
+/**
+ * Resolve ACTION_SHOW_ALARMS to an explicit component. An *implicit* ACTION_SHOW_ALARMS fired
+ * through a widget PendingIntent is silently dropped by many launchers (no chooser, no toast);
+ * pinning it to the resolved component — as clockAction does for the clock launcher entry — makes
+ * the tap reliable. Falls back to the implicit intent when nothing resolves. Package visibility
+ * for the resolve is covered by the SHOW_ALARMS <queries> entry in the manifest.
+ */
+internal fun alarmsIntent(pm: PackageManager): Intent {
+    val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    pm.resolveActivity(intent, 0)?.activityInfo?.let { intent.setClassName(it.packageName, it.name) }
+    return intent
+}
 
 /**
  * "Open clock" has no stored package, so resolve the default clock app's launcher entry

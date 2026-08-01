@@ -1,0 +1,3 @@
+Version 0.1.2
+
+- Fix the "Open alarms" tap action doing nothing: the alarm-bell glyph now reliably opens the alarms screen (the implicit intent was being dropped by the widget's PendingIntent; it is now resolved to an explicit component before launch)

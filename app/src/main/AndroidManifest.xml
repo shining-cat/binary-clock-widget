@@ -23,6 +23,14 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!--
+          "Open alarms" resolves ACTION_SHOW_ALARMS to an explicit component before firing (an
+          implicit action through a widget PendingIntent is silently dropped). Declaring it here
+          keeps the resolve working even on devices where the clock app has no launcher entry.
+        -->
+        <intent>
+            <action android:name="android.intent.action.SHOW_ALARMS" />
+        </intent>
     </queries>
 
     <application
