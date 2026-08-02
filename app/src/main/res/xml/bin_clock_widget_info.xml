@@ -9,5 +9,5 @@
     android:configure="fr.shiningcat.binclockwidget.config.SettingsActivity"
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/glance_default_loading_layout"
-    android:previewLayout="@layout/widget_preview"
+    android:previewImage="@drawable/widget_preview_image"
     android:widgetFeatures="reconfigurable" />

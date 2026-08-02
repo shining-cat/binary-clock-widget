@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!--
+      Widget-picker preview. Deliberately mirrors the launcher icon (ic_launcher_foreground):
+      the same 4x4 binary dot grid — filled dots (lit bits) mixed with hollow rings (off bits) —
+      on the widget's own AMOLED-black background, so picker and home screen read as one product.
+      Geometry copied verbatim from the icon foreground (dot centres span 36..72.5, radius 4.5,
+      ring inner radius 2.9). previewImage (not previewLayout) so it renders on all of minSdk 26+.
+    -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M0,0 h108 v108 h-108 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="
+            M44,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M68,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M32,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M56,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M44,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M56,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M32,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M68,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z
+            M32,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M33.6,36.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M56,36.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M57.6,36.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M44,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M45.6,48.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M68,48.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M69.6,48.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M32,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M33.6,60.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M68,60.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M69.6,60.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M44,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M45.6,72.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z
+            M56,72.5 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z M57.6,72.5 a2.9,2.9 0 1,0 5.8,0 a2.9,2.9 0 1,0 -5.8,0 z" />
+</vector>

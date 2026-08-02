@@ -1,0 +1,3 @@
+Version 0.1.3
+
+- Add a proper widget-picker preview: the launcher's "add widget" list now shows a representative binary dot-grid tile (matching the app icon) instead of a blank black square
