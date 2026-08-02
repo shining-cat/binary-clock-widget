@@ -1,0 +1,109 @@
+name: Monthly Master Sanity Check
+run-name: Running Monthly Master Sanity Check
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+
+jobs:
+  check-deprecations:
+    name: Check Deprecations
+    uses: ./.github/workflows/reusable-deprecation-checker.yml
+    permissions:
+      issues: write
+      contents: read
+
+  check-dependency-updates:
+    name: Check Dependency Updates
+    uses: ./.github/workflows/reusable-dependency-updates-checker.yml
+    permissions:
+      issues: write
+      contents: read
+
+  check-license-headers:
+    name: Check License Headers
+    uses: ./.github/workflows/reusable-spotless-check.yml
+
+  check-license-year:
+    name: Check License Copyright Year
+    uses: ./.github/workflows/reusable-license-year-checker.yml
+    permissions:
+      issues: write
+      contents: read
+
+  report-results:
+    name: Report Results
+    runs-on: ubuntu-latest
+    needs: [check-deprecations, check-dependency-updates, check-license-headers, check-license-year]
+    if: always()
+    steps:
+      - name: Check Results
+        run: |
+          echo "## Monthly Sanity Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Track if any check failed to run
+          ANY_FAILED=false
+
+          # Deprecations
+          DEPRECATIONS_STATUS="${{ needs.check-deprecations.outputs.status }}"
+          echo "### Deprecations: $DEPRECATIONS_STATUS" >> $GITHUB_STEP_SUMMARY
+          if [ "$DEPRECATIONS_STATUS" == "failure" ]; then
+            echo "❌ Check failed to complete" >> $GITHUB_STEP_SUMMARY
+            ANY_FAILED=true
+          elif [ "$DEPRECATIONS_STATUS" == "success-issues" ]; then
+            echo "⚠️ Issues found (see created issue)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Dependency Updates
+          DEP_UPDATES_STATUS="${{ needs.check-dependency-updates.outputs.status }}"
+          echo "### Dependency Updates: $DEP_UPDATES_STATUS" >> $GITHUB_STEP_SUMMARY
+          if [ "$DEP_UPDATES_STATUS" == "failure" ]; then
+            echo "❌ Check failed to complete" >> $GITHUB_STEP_SUMMARY
+            ANY_FAILED=true
+          elif [ "$DEP_UPDATES_STATUS" == "success-issues" ]; then
+            echo "⚠️ Issues found (see created issue)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # License Headers
+          LICENSE_HEADERS_RESULT="${{ needs.check-license-headers.result }}"
+          echo "### License Headers: $LICENSE_HEADERS_RESULT" >> $GITHUB_STEP_SUMMARY
+          if [ "$LICENSE_HEADERS_RESULT" == "failure" ]; then
+            echo "❌ Missing or incorrect license headers" >> $GITHUB_STEP_SUMMARY
+            ANY_FAILED=true
+          else
+            echo "✅ All files have correct GPL-3.0 SPDX headers" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # License Year
+          LICENSE_YEAR_STATUS="${{ needs.check-license-year.outputs.status }}"
+          echo "### License Copyright Year: $LICENSE_YEAR_STATUS" >> $GITHUB_STEP_SUMMARY
+          if [ "$LICENSE_YEAR_STATUS" == "failure" ]; then
+            echo "❌ Check failed to complete" >> $GITHUB_STEP_SUMMARY
+            ANY_FAILED=true
+          elif [ "$LICENSE_YEAR_STATUS" == "success-issues" ]; then
+            echo "⚠️ Copyright year is outdated (see created issue)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Copyright year is current" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Fail workflow only if any check failed to run
+          if [ "$ANY_FAILED" == "true" ]; then
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **One or more checks failed to complete. Please review the logs.**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All checks completed successfully. Issues have been created for items needing attention.**" >> $GITHUB_STEP_SUMMARY
+          fi
