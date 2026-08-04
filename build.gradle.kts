@@ -67,7 +67,7 @@ kover {
 }
 
 dependencies {
-    kover(project(":app"))
+    kover(projects.app)
 }
 
 // ktlint is applied per-project (it lints each project's own source set). Applying and configuring

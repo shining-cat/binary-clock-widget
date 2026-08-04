@@ -1,13 +1,13 @@
 [versions]
 # Build tooling
 agp = "9.3.1"
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 
 # Static analysis / quality
 ktlintGradlePlugin = "14.2.0"
-spotless = "8.8.0"
-kover = "0.9.8"
-dependencyUpdatePlugin = "0.54.0"
+spotless = "8.9.0"
+kover = "0.9.9"
+dependencyUpdatePlugin = "0.58.0"
 
 # AndroidX / Compose (pinned to the SDK-37 train; compileSdk is 37)
 composeBom = "2026.06.01"
@@ -16,7 +16,7 @@ glance = "1.1.1"
 datastore = "1.2.1"
 work = "2.11.2"
 material = "1.14.0"
-lifecycleViewmodel = "2.10.0"
+lifecycleViewmodel = "2.11.0"
 
 # DI
 koin = "4.2.2"
@@ -30,7 +30,7 @@ serializationJson = "1.11.0"
 coroutines = "1.11.0"
 
 # Testing
-jupiter = "6.1.1"
+jupiter = "6.1.2"
 mockk = "1.14.11"
 coroutinesTest = "1.11.0"
 
@@ -86,4 +86,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ktlint-gradle = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradlePlugin" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
-dependencyupdate = { id = "com.github.ben-manes.versions", version.ref = "dependencyUpdatePlugin" }
+dependencyupdate = { id = "io.github.ben-manes.versions", version.ref = "dependencyUpdatePlugin" }
