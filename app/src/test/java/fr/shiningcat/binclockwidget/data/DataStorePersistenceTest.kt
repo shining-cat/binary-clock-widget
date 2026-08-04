@@ -62,6 +62,41 @@ class DataStorePersistenceTest {
     }
 
     @Test
+    fun `weather cache round-trips sunrise and sunset`(
+        @TempDir dir: File,
+    ) = runTest(UnconfinedTestDispatcher()) {
+        val cache = DataStoreWeatherCache(backgroundScope.store(dir, "weather.preferences_pb"))
+        val snap =
+            WeatherSnapshot(
+                nowCode = 3,
+                nowIsDay = false,
+                todayCode = 61,
+                tomorrowCode = 71,
+                fetchedAtEpochMs = 1_700_000_000_000L,
+                sunriseToday = "2026-08-04T05:42",
+                sunsetToday = "2026-08-04T21:30",
+            )
+        cache.write(snap)
+        assertEquals(snap, cache.read())
+    }
+
+    @Test
+    fun `null sunrise and sunset persist as null`(
+        @TempDir dir: File,
+    ) = runTest(UnconfinedTestDispatcher()) {
+        val cache = DataStoreWeatherCache(backgroundScope.store(dir, "weather.preferences_pb"))
+        // First write times, then overwrite with a snapshot lacking them: the keys must be removed,
+        // not left holding the previous run's values (an old-cache / endpoint-omits-them scenario).
+        cache.write(
+            WeatherSnapshot(3, false, 61, 71, 1L, sunriseToday = "2026-08-04T05:42", sunsetToday = "2026-08-04T21:30"),
+        )
+        cache.write(WeatherSnapshot(3, false, 61, 71, 2L))
+        val read = cache.read()
+        assertNull(read?.sunriseToday)
+        assertNull(read?.sunsetToday)
+    }
+
+    @Test
     fun `settings on empty store equals defaults`(
         @TempDir dir: File,
     ) = runTest(UnconfinedTestDispatcher()) {

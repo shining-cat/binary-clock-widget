@@ -133,6 +133,49 @@ class WidgetStateResolverTest {
         }
 
     @Test
+    fun `stale night snapshot is corrected to day from cached sunrise-sunset at render time`() =
+        runTest {
+            val resolver =
+                WidgetStateResolver(
+                    now = { LocalDateTime.of(2026, 8, 4, 13, 47) },
+                    alarm = AlarmDataSource { false },
+                    // Cached at dawn with is_day=false; sunrise/sunset bracket the render time.
+                    weather =
+                        FakeWeatherRepo(
+                            WeatherSnapshot(
+                                nowCode = 0,
+                                nowIsDay = false,
+                                todayCode = 1,
+                                tomorrowCode = 3,
+                                fetchedAtEpochMs = 1L,
+                                sunriseToday = "2026-08-04T05:42",
+                                sunsetToday = "2026-08-04T21:30",
+                            ),
+                        ),
+                    settings = FakeSettingsStore(WidgetSettings(weatherEndpoint = OPEN_METEO)),
+                    battery = BatteryDataSource { null },
+                )
+
+            assertTrue(resolver.resolve().weather?.nowIsDay == true)
+        }
+
+    @Test
+    fun `without cached sunrise-sunset the fetch-time is_day is kept`() =
+        runTest {
+            val resolver =
+                WidgetStateResolver(
+                    now = { LocalDateTime.of(2026, 8, 4, 13, 47) },
+                    alarm = AlarmDataSource { false },
+                    // No sunrise/sunset (old cache / endpoint omits them) → fall back to cached is_day.
+                    weather = FakeWeatherRepo(WeatherSnapshot(0, false, 1, 3, 1L)),
+                    settings = FakeSettingsStore(WidgetSettings(weatherEndpoint = OPEN_METEO)),
+                    battery = BatteryDataSource { null },
+                )
+
+            assertFalse(resolver.resolve().weather?.nowIsDay == true)
+        }
+
+    @Test
     fun `passes through null weather, unset alarm and unavailable battery`() =
         runTest {
             val resolver =

@@ -16,5 +16,7 @@ object WeatherMapper {
         todayCode = dto.daily.weatherCode.getOrElse(0) { dto.current.weatherCode },
         tomorrowCode = dto.daily.weatherCode.getOrElse(1) { dto.daily.weatherCode.getOrElse(0) { dto.current.weatherCode } },
         fetchedAtEpochMs = fetchedAtEpochMs,
+        sunriseToday = dto.daily.sunrise.getOrNull(0),
+        sunsetToday = dto.daily.sunset.getOrNull(0),
     )
 }
