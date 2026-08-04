@@ -1,6 +1,16 @@
 # BinClockWidget
 
+<!-- Project Status & Distribution -->
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![F-Droid](https://img.shields.io/badge/F--Droid-coming%20soon-orange)
+
+<!-- CI/CD & Quality Checks -->
+[![Ktlint Check](https://img.shields.io/github/actions/workflow/status/shining-cat/binary-clock-widget/android-verifications.yml?event=pull_request&label=Ktlint%20Check)](https://github.com/shining-cat/binary-clock-widget/actions/workflows/android-verifications.yml)
+[![Unit Tests](https://img.shields.io/github/actions/workflow/status/shining-cat/binary-clock-widget/android-verifications.yml?event=pull_request&label=Unit%20Tests)](https://github.com/shining-cat/binary-clock-widget/actions/workflows/android-verifications.yml)
+[![Deprecation Check](https://img.shields.io/github/actions/workflow/status/shining-cat/binary-clock-widget/monthly-master-sanity-check.yml?label=No%20Deprecations)](https://github.com/shining-cat/binary-clock-widget/issues?q=is%3Aissue+is%3Aopen+label%3Adeprecations)
+
+<!-- Standards & Compliance -->
+[![ktlint](https://img.shields.io/badge/ktlint%20code--style-%E2%9D%A4-FF4081)](https://pinterest.github.io/ktlint/)
 
 An AMOLED-black, monochrome **binary-clock** Android home-screen widget.
 
