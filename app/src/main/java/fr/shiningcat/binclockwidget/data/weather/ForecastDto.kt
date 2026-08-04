@@ -19,4 +19,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class DailyDto(
     @SerialName("weather_code") val weatherCode: List<Int>, // [today, tomorrow]
+    // ISO-local timestamps [today, tomorrow], e.g. "2026-08-04T05:42". Defaulted so a custom
+    // endpoint that omits them still parses; day/night then falls back to the cached is_day.
+    @SerialName("sunrise") val sunrise: List<String> = emptyList(),
+    @SerialName("sunset") val sunset: List<String> = emptyList(),
 )

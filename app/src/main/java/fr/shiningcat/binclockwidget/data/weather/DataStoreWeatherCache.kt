@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import fr.shiningcat.binclockwidget.domain.model.WeatherSnapshot
 import kotlinx.coroutines.flow.first
 
@@ -25,6 +26,8 @@ class DataStoreWeatherCache(
             todayCode = prefs[TODAY_CODE] ?: 0,
             tomorrowCode = prefs[TOMORROW_CODE] ?: 0,
             fetchedAtEpochMs = fetchedAt,
+            sunriseToday = prefs[SUNRISE_TODAY],
+            sunsetToday = prefs[SUNSET_TODAY],
         )
     }
 
@@ -35,6 +38,10 @@ class DataStoreWeatherCache(
             prefs[TODAY_CODE] = snapshot.todayCode
             prefs[TOMORROW_CODE] = snapshot.tomorrowCode
             prefs[FETCHED_AT] = snapshot.fetchedAtEpochMs
+            // Absent sunrise/sunset must REMOVE the key, so a later endpoint that omits them can't
+            // leave a previous run's stale times behind.
+            snapshot.sunriseToday?.let { prefs[SUNRISE_TODAY] = it } ?: prefs.remove(SUNRISE_TODAY)
+            snapshot.sunsetToday?.let { prefs[SUNSET_TODAY] = it } ?: prefs.remove(SUNSET_TODAY)
         }
     }
 
@@ -44,5 +51,7 @@ class DataStoreWeatherCache(
         val TODAY_CODE = intPreferencesKey("today_code")
         val TOMORROW_CODE = intPreferencesKey("tomorrow_code")
         val FETCHED_AT = longPreferencesKey("fetched_at")
+        val SUNRISE_TODAY = stringPreferencesKey("sunrise_today")
+        val SUNSET_TODAY = stringPreferencesKey("sunset_today")
     }
 }

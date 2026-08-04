@@ -27,4 +27,8 @@ data class WeatherSnapshot(
     val todayCode: Int,
     val tomorrowCode: Int,
     val fetchedAtEpochMs: Long,
+    // Today's sunrise/sunset as Open-Meteo ISO-local strings; null when unavailable (old cache or an
+    // endpoint that omits them). Used to derive nowIsDay at render time — see DayNightResolver.
+    val sunriseToday: String? = null,
+    val sunsetToday: String? = null,
 )

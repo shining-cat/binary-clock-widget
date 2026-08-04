@@ -13,7 +13,7 @@ interface OpenMeteoApi {
         @Query("latitude") lat: Double,
         @Query("longitude") lon: Double,
         @Query("current") current: String = "weather_code,is_day",
-        @Query("daily") daily: String = "weather_code",
+        @Query("daily") daily: String = "weather_code,sunrise,sunset",
         @Query("forecast_days") days: Int = 2,
         @Query("timezone") tz: String = "auto",
     ): ForecastDto
