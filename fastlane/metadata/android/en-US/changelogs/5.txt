@@ -1,0 +1,4 @@
+Version 1.0.0
+
+- Fix stale day/night weather glyph: the sun/moon icon now reflects the actual time of day, derived at render time from the cached sunrise/sunset times, so it stays correct even after the device has been asleep
+- First stable release
