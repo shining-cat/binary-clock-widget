@@ -1,0 +1,3 @@
+Version 1.1.0
+
+- New settings: Battery warning thresholds are now configurable. Use the number steppers in Settings to adjust when low-battery and very-low-battery warnings appear, tailoring them to your device and usage patterns (defaults: 20% / 10%)
