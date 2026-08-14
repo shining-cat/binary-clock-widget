@@ -249,6 +249,7 @@ private fun BatteryIndicatorRow(
 ) {
     val fraction = indicator?.fraction ?: 0f
     val glyph = indicator?.glyph ?: BatteryGlyph.NONE
+    android.util.Log.d("DotGrid", "Rendering battery: fraction=$fraction, glyph=$glyph, drawable=${batteryGlyphDrawable(glyph)}")
     // Dots sit (cell - dot)/2 inside their square cells, so a bar filling the row from its edge
     // juts out past the leftmost dot toward the widget border. Inset the gauge by that same amount
     // so its left edge lines up with the dots; the glyph fills the 6th column, centred under the

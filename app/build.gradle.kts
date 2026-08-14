@@ -50,6 +50,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+        }
         release {
             isMinifyEnabled = false
             if (signingKeystorePath != null && signingKeystorePassword != null) {

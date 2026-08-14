@@ -11,23 +11,34 @@ import fr.shiningcat.binclockwidget.domain.model.BatteryStatus
 /**
  * Pure thresholds + glyph selection for the battery indicator. Charging wins over any low state:
  * a charging phone is not "in trouble", so the bolt takes precedence over the warning escalation.
+ *
+ * Thresholds are configurable to allow diagnostic testing with real battery (set higher thresholds
+ * like 80%/60% to see indicators without waiting for battery to drain).
  */
 object BatteryIndicatorMapper {
-    const val LOW_THRESHOLD = 20
-    const val VERY_LOW_THRESHOLD = 10
+    const val DEFAULT_LOW_THRESHOLD = 20
+    const val DEFAULT_VERY_LOW_THRESHOLD = 10
 
-    fun level(percent: Int): BatteryLevel =
+    fun level(
+        percent: Int,
+        lowThreshold: Int = DEFAULT_LOW_THRESHOLD,
+        veryLowThreshold: Int = DEFAULT_VERY_LOW_THRESHOLD,
+    ): BatteryLevel =
         when {
-            percent <= VERY_LOW_THRESHOLD -> BatteryLevel.VERY_LOW
-            percent <= LOW_THRESHOLD -> BatteryLevel.LOW
+            percent <= veryLowThreshold -> BatteryLevel.VERY_LOW
+            percent <= lowThreshold -> BatteryLevel.LOW
             else -> BatteryLevel.NORMAL
         }
 
-    fun glyph(status: BatteryStatus): BatteryGlyph =
+    fun glyph(
+        status: BatteryStatus,
+        lowThreshold: Int = DEFAULT_LOW_THRESHOLD,
+        veryLowThreshold: Int = DEFAULT_VERY_LOW_THRESHOLD,
+    ): BatteryGlyph =
         if (status.isCharging) {
             BatteryGlyph.CHARGING
         } else {
-            when (level(status.percent)) {
+            when (level(status.percent, lowThreshold, veryLowThreshold)) {
                 BatteryLevel.VERY_LOW -> BatteryGlyph.VERY_LOW
                 BatteryLevel.LOW -> BatteryGlyph.LOW
                 BatteryLevel.NORMAL -> BatteryGlyph.NONE

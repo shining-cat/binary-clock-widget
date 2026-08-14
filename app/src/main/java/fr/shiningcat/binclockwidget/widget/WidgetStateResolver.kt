@@ -44,9 +44,19 @@ class WidgetStateResolver(
             settings = current,
             battery =
                 battery.read()?.let { status ->
+                    val glyph = BatteryIndicatorMapper.glyph(
+                        status,
+                        lowThreshold = current.batteryLowThreshold,
+                        veryLowThreshold = current.batteryVeryLowThreshold,
+                    )
+                    android.util.Log.d(
+                        "WidgetStateResolver",
+                        "Battery: ${status.percent}%, charging=${status.isCharging}, " +
+                            "thresholds=${current.batteryVeryLowThreshold}/${current.batteryLowThreshold} → glyph=$glyph",
+                    )
                     BatteryIndicator(
                         fraction = (status.percent / 100f).coerceIn(0f, 1f),
-                        glyph = BatteryIndicatorMapper.glyph(status),
+                        glyph = glyph,
                     )
                 },
         )

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,9 +27,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,9 +49,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.shiningcat.binclockwidget.R
 import fr.shiningcat.binclockwidget.config.SettingsUiState
 import fr.shiningcat.binclockwidget.config.SettingsViewModel
 import fr.shiningcat.binclockwidget.data.weather.WeatherEndpoint
@@ -106,6 +114,8 @@ fun SettingsScreen(
         onTapActionChanged = viewModel::onTapActionChanged,
         onTapAppPackageChanged = viewModel::onTapAppPackageChanged,
         onWeatherEndpointChanged = onWeatherEndpointChanged,
+        onBatteryLowThresholdChanged = viewModel::onBatteryLowThresholdChanged,
+        onBatteryVeryLowThresholdChanged = viewModel::onBatteryVeryLowThresholdChanged,
         onRequestLocation = onRequestLocation,
         onConfirm = onConfirm,
     )
@@ -121,6 +131,8 @@ private fun SettingsScreen(
     onTapActionChanged: (TapZone, TapAction) -> Unit,
     onTapAppPackageChanged: (TapZone, String?) -> Unit,
     onWeatherEndpointChanged: (String) -> Unit,
+    onBatteryLowThresholdChanged: (Int) -> Unit,
+    onBatteryVeryLowThresholdChanged: (Int) -> Unit,
     onRequestLocation: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -138,6 +150,8 @@ private fun SettingsScreen(
                 onTapActionChanged = onTapActionChanged,
                 onTapAppPackageChanged = onTapAppPackageChanged,
                 onWeatherEndpointChanged = onWeatherEndpointChanged,
+                onBatteryLowThresholdChanged = onBatteryLowThresholdChanged,
+                onBatteryVeryLowThresholdChanged = onBatteryVeryLowThresholdChanged,
                 onRequestLocation = onRequestLocation,
                 onConfirm = onConfirm,
             )
@@ -155,6 +169,8 @@ private fun ReadySettings(
     onTapActionChanged: (TapZone, TapAction) -> Unit,
     onTapAppPackageChanged: (TapZone, String?) -> Unit,
     onWeatherEndpointChanged: (String) -> Unit,
+    onBatteryLowThresholdChanged: (Int) -> Unit,
+    onBatteryVeryLowThresholdChanged: (Int) -> Unit,
     onRequestLocation: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -239,6 +255,25 @@ private fun ReadySettings(
                 ) {
                     Text("Grant location")
                 }
+            }
+
+            Section("Battery indicator") {
+                Text(
+                    text = "Configure thresholds for low battery warnings.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                ThresholdStepper(
+                    label = "Low battery",
+                    icon = R.drawable.ic_warning,
+                    value = settings.batteryLowThreshold,
+                    onValueChange = onBatteryLowThresholdChanged,
+                )
+                ThresholdStepper(
+                    label = "Very low battery",
+                    icon = R.drawable.ic_warning_filled,
+                    value = settings.batteryVeryLowThreshold,
+                    onValueChange = onBatteryVeryLowThresholdChanged,
+                )
             }
         }
         // Pinned footer: Done stays visible regardless of scroll, and the note reassures the user
@@ -483,6 +518,62 @@ private fun ToggleRow(
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun ThresholdStepper(
+    label: String,
+    icon: Int,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(text = label, style = MaterialTheme.typography.bodyMedium)
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilledTonalIconButton(
+                onClick = { if (value > 0) onValueChange(value - 5) },
+                enabled = value > 0,
+            ) {
+                Text(
+                    text = "−",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
+            Text(
+                text = "$value%",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.widthIn(min = 48.dp),
+                textAlign = TextAlign.Center,
+            )
+            FilledTonalIconButton(
+                onClick = { if (value < 100) onValueChange(value + 5) },
+                enabled = value < 100,
+            ) {
+                Text(
+                    text = "+",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
+        }
     }
 }
 

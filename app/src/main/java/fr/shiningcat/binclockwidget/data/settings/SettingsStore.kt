@@ -53,6 +53,8 @@ class DataStoreSettingsStore(
                         this[packageKey(zone)]?.let { zone to it }
                     }.toMap(),
             weatherEndpoint = this[WEATHER_ENDPOINT] ?: d.weatherEndpoint, // absent = weather disabled
+            batteryLowThreshold = this[BATTERY_LOW_THRESHOLD] ?: d.batteryLowThreshold,
+            batteryVeryLowThreshold = this[BATTERY_VERY_LOW_THRESHOLD] ?: d.batteryVeryLowThreshold,
         )
     }
 
@@ -67,6 +69,8 @@ class DataStoreSettingsStore(
             if (pkg != null) prefs[packageKey(zone)] = pkg else prefs.remove(packageKey(zone))
         }
         if (weatherEndpoint.isNotBlank()) prefs[WEATHER_ENDPOINT] = weatherEndpoint else prefs.remove(WEATHER_ENDPOINT)
+        prefs[BATTERY_LOW_THRESHOLD] = batteryLowThreshold
+        prefs[BATTERY_VERY_LOW_THRESHOLD] = batteryVeryLowThreshold
     }
 
     private companion object {
@@ -75,6 +79,8 @@ class DataStoreSettingsStore(
         val ICON_COLOR_ARGB = intPreferencesKey("icon_color_argb")
         val BACKGROUND_COLOR_ARGB = intPreferencesKey("background_color_argb")
         val WEATHER_ENDPOINT = stringPreferencesKey("weather_endpoint")
+        val BATTERY_LOW_THRESHOLD = intPreferencesKey("battery_low_threshold")
+        val BATTERY_VERY_LOW_THRESHOLD = intPreferencesKey("battery_very_low_threshold")
 
         fun actionKey(zone: TapZone) = stringPreferencesKey("tap_action_${zone.name}")
 

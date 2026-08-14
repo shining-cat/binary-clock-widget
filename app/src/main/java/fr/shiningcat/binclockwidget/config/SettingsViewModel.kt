@@ -70,6 +70,12 @@ class SettingsViewModel(
         mutate { it.copy(weatherEndpoint = value.trim()) }
     }
 
+    fun onBatteryLowThresholdChanged(threshold: Int) =
+        mutate { it.copy(batteryLowThreshold = threshold.coerceIn(0, 100)) }
+
+    fun onBatteryVeryLowThresholdChanged(threshold: Int) =
+        mutate { it.copy(batteryVeryLowThreshold = threshold.coerceIn(0, 100)) }
+
     fun refreshPermission() {
         permission.value = locationGranted()
     }

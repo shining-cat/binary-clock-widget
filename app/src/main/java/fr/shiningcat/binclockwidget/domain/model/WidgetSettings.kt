@@ -29,4 +29,7 @@ data class WidgetSettings(
     // access, no network calls. Weather is opt-in — the user fills this (via the "Use Open-Meteo"
     // button or their own self-hosted server) to turn it on.
     val weatherEndpoint: String = "",
+    // Battery indicator thresholds (percent). LOW shows outlined warning; VERY_LOW shows filled warning.
+    val batteryLowThreshold: Int = 20,
+    val batteryVeryLowThreshold: Int = 10,
 )

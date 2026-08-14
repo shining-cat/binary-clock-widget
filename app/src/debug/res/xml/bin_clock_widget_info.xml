@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="3"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:configure="fr.shiningcat.binclockwidget.config.SettingsActivity"
+    android:widgetCategory="home_screen"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:previewImage="@drawable/widget_preview_image"
+    android:widgetFeatures="reconfigurable"
+    android:label="@string/app_name"
+    android:description="@string/app_name" />
