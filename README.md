@@ -100,14 +100,20 @@ two parts, both in the icon tone:
   | Glyph | Meaning |
   |-------|---------|
   | ⚡ bolt | Charging (at any level — charging always wins) |
-  | △ outline triangle | Low: 20% or less, discharging |
-  | ▲ filled triangle | Very low: 10% or less, discharging |
-  | *(empty)* | Above 20% and discharging — gauge only |
+  | △ outline triangle | Low (default: 20% or less), discharging |
+  | ▲ filled triangle | Very low (default: 10% or less), discharging |
+  | *(empty)* | Above low threshold and discharging — gauge only |
 
 The escalation reads as one shape getting "louder": hollow at low, solid at very
 low. The bolt is a distinct shape so charging is never confused with a warning.
 There's deliberately no charging-speed distinction and no colour — see the
 [design notes](#the-battery-glyph-is-a-warning-not-a-battery) below.
+
+**Configurable thresholds:** The low and very-low battery warning thresholds
+can be adjusted in settings via number steppers (+5% / −5% increments). This
+lets you customize warnings based on your device and usage patterns — set
+higher thresholds if you want earlier warnings, or lower if your device has
+good standby time.
 
 ## Weather
 

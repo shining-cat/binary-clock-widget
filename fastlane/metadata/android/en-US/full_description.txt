@@ -14,6 +14,10 @@ For example, a minutes row with the 32, 8, and 2 dots lit reads 32 + 8 + 2 = 42.
 
 The cells not needed by the low-value ends of the shorter rows are reused to show the alarm state and a weather condition glyph.
 
+Battery indicator
+
+Between the minutes and day rows sits a battery readout that's always on: a level gauge showing charge percentage, plus a state glyph (charging bolt, low-battery warning triangle, or very-low filled triangle). The warning thresholds are configurable in settings — adjust them to match your device and usage patterns.
+
 Weather, network & privacy
 
 Weather is off by default and opt-in: on a fresh install the widget makes no network or location calls, and no weather glyph is shown. Weather stays entirely dormant until you enter a weather server URL in the widget settings.
