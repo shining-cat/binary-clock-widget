@@ -19,8 +19,8 @@ android {
         applicationId = "fr.shiningcat.binclockwidget"
         minSdk = 26
         targetSdk = 37
-        versionCode = 6
-        versionName = "1.1.0"
+        versionCode = 7
+        versionName = "1.1.1"
     }
 
     // Strip AGP's "Dependency metadata" blob from the APK signing block. F-Droid's scanner rejects
