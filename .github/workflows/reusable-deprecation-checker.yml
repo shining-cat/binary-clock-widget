@@ -56,10 +56,12 @@ jobs:
 
           echo "build_failed=false" >> $GITHUB_OUTPUT
 
-          # Filter out AGP-internal deprecation warnings that cannot be fixed
-          # Only AGP uses multi-string notation internally
+          # Filter out false positives that cannot be fixed:
+          # - AGP-internal warnings (multi-string notation)
+          # - Gradle release notes banner (bullet points from release highlights)
           grep -i "deprecat" build-reports/build-output.log | \
-            grep -F -v 'Declaring dependencies using multi-string notation' > build-reports/deprecations.txt || true
+            grep -F -v 'Declaring dependencies using multi-string notation' | \
+            grep -E -v '^ - .*(deprecat|Deprecat)' > build-reports/deprecations.txt || true
 
           # Count deprecation warnings
           DEPRECATION_COUNT=$(wc -l < build-reports/deprecations.txt | tr -d ' ')
