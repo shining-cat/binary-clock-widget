@@ -21,10 +21,11 @@ class AndroidBatteryDataSource(
     override fun read(): BatteryStatus? {
         // Sticky broadcast: registerReceiver(null, ...) returns the last ACTION_BATTERY_CHANGED
         // intent immediately, no receiver registered, no permission required.
-        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: run {
-            android.util.Log.w("BatteryDataSource", "Battery intent is null")
-            return null
-        }
+        val intent =
+            context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: run {
+                android.util.Log.w("BatteryDataSource", "Battery intent is null")
+                return null
+            }
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
         if (level < 0 || scale <= 0) {
