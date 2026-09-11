@@ -1,18 +1,18 @@
 [versions]
 # Build tooling
-agp = "9.3.1"
+agp = "9.3.2"
 kotlin = "2.4.10"
 
 # Static analysis / quality
 ktlintGradlePlugin = "14.2.0"
-spotless = "8.9.0"
+spotless = "8.10.1"
 kover = "0.9.9"
-dependencyUpdatePlugin = "0.58.0"
+dependencyUpdatePlugin = "0.61.0"
 
 # AndroidX / Compose (pinned to the SDK-37 train; compileSdk is 37)
-composeBom = "2026.06.01"
+composeBom = "2026.08.00"
 activityCompose = "1.13.0"
-glance = "1.1.1"
+glance = "1.2.0"
 datastore = "1.2.1"
 work = "2.11.2"
 material = "1.14.0"
@@ -23,14 +23,14 @@ koin = "4.2.2"
 
 # Networking / serialization
 retrofit = "3.0.0"
-okhttp = "5.4.0"
+okhttp = "5.5.0"
 serializationJson = "1.11.0"
 
 # Coroutines
 coroutines = "1.11.0"
 
 # Testing
-jupiter = "6.1.2"
+jupiter = "6.1.3"
 mockk = "1.14.11"
 coroutinesTest = "1.11.0"
 
