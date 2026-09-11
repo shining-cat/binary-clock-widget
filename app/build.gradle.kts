@@ -86,6 +86,14 @@ android {
             keepDebugSymbols += "**/*.so"
         }
     }
+
+    testOptions {
+        unitTests {
+            // Return default values for unmocked Android framework methods (Log.d, etc.)
+            // instead of throwing exceptions
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 kotlin {
