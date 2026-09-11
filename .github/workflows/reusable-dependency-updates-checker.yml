@@ -53,15 +53,28 @@ jobs:
             exit 1
           fi
 
-          # Extract only the "dependencies have later" section and filter out transitive dependencies.
-          # Also filter out the URL lines that follow each filtered dependency.
-          # Filter out unstable Gradle versions (RC, canary, milestone, alpha, beta, dev, SNAPSHOT).
+          # Extract dependency updates AND Gradle updates (which come after "Failed to determine")
+          # The output structure is:
+          #   1. "The following dependencies have later..." section
+          #   2. "Failed to determine..." section
+          #   3. "Gradle release-candidate updates:" section
+          # We need sections 1 and 3, but the original sed stopped at section 2
+
+          # Extract main dependencies section (stops at "Failed to determine")
+          sed -n '/The following dependencies have later/,/^Failed to determine/p' dependency-updates-output.txt | \
+            grep -v '^Failed to determine' > dependency-updates-temp.txt || true
+
+          # Extract Gradle updates section (from "Gradle release" to end/next major section)
+          sed -n '/^Gradle release/,/^Generated report\|^$/p' dependency-updates-output.txt | \
+            grep -v '^Generated report' >> dependency-updates-temp.txt || true
+
+          # Filter out transitive dependencies and RC-only Gradle updates
+          # For Gradle: Keep lines with 2+ arrows (e.g., "9.5.0 -> 9.7.1 -> 9.8.0-rc-1" shows
+          # stable 9.7.1 is available). Filter lines with 1 arrow (e.g., "9.7.1 -> 9.8.0-rc-1"
+          # means only RC available, no stable update).
           # Excluded artifacts are transitive / plugin-managed — they cannot be bumped directly, they
-          # move with their parent (ktlint-gradle, detekt, or the Kotlin version). Derived from this
-          # repo's actual `dependencyUpdates` output, not copied from another project.
-          sed -n '/The following dependencies have later/,/^Failed to determine\|^$/p' dependency-updates-output.txt | \
-            grep -v '^Failed to determine' | \
-            grep -E -v 'Gradle.*(-rc-|-canary|-milestone|-alpha|-beta|-dev|RC|SNAPSHOT)' | \
+          # move with their parent (ktlint-gradle, detekt, or the Kotlin version).
+          cat dependency-updates-temp.txt | \
             grep -F -v 'com.pinterest.ktlint:ktlint-cli' | \
             grep -F -v 'com.pinterest.ktlint:ktlint-cli-reporter-baseline' | \
             grep -F -v 'com.pinterest.ktlint:ktlint-ruleset-standard' | \
@@ -75,7 +88,10 @@ jobs:
             grep -F -v 'https://github.com/pinterest/ktlint' | \
             grep -F -v 'https://detekt.github.io/detekt' | \
             grep -F -v 'https://github.com/oshai/kotlin-logging' | \
-            grep -F -v 'https://kotlinlang.org/' > dependency-updates-filtered.txt || true
+            grep -F -v 'https://kotlinlang.org/' | \
+            awk '!/^ - Gradle:/ || gsub(/->/,"&") > 1' > dependency-updates-filtered.txt || true
+
+          rm -f dependency-updates-temp.txt
 
           # Count actual dependency update lines (start with " - ")
           UPDATE_COUNT=$(grep -c '^ - ' dependency-updates-filtered.txt 2>/dev/null || echo "0")
